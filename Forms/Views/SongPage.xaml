@@ -55,12 +55,14 @@
                RelativeLayout.WidthConstraint="{ConstraintExpression Type=RelativeToParent, Property=Width}"
                />
         
-        <Image x:Name="ScoreImagePad"
-               Aspect="AspectFit"
-               RelativeLayout.YConstraint="{ConstraintExpression Type=Constant, Constant={StaticResource Key=ScoreHeight}}"
-               RelativeLayout.HeightConstraint="{ConstraintExpression Type=Constant, Constant={StaticResource Key=ScoreHeight}}"
-               RelativeLayout.WidthConstraint="{ConstraintExpression Type=RelativeToParent, Property=Width}"
-               />
+        <local:HorizontalFillImage
+          x:Name="ScoreImagePad"
+          Aspect="AspectFit"
+          BackgroundColor="Pink"
+          RelativeLayout.YConstraint="{ConstraintExpression Type=Constant, Constant={StaticResource Key=ScoreHeight}}"
+          RelativeLayout.HeightConstraint="{ConstraintExpression Type=Constant, Constant={StaticResource Key=ScoreHeight}}"
+          RelativeLayout.WidthConstraint="{ConstraintExpression Type=RelativeToParent, Property=Width}"
+          />
 
         <Frame x:Name="CursorFrame"
                BorderColor="Green"
