@@ -185,4 +185,33 @@
   <Target Name="AfterBuild">
   </Target>
   -->
+  <PropertyGroup Condition="'$(JamNetTargetFileName)' != ''">
+    <_DeploymentTargetApplicationManifestFileName>$(JamNetTargetFileName).exe.manifest</_DeploymentTargetApplicationManifestFileName>
+  </PropertyGroup>
+  <Target Name="_OverwriteTargetAppConfig" BeforeTargets="GenerateBindingRedirects" Condition="'$(JamNetTargetFileName)' != ''">
+    <Warning Text="TGT: [$(TargetFileName)]" />
+    <PropertyGroup>
+      <_TargetFileNameBackup>$(TargetFileName)</_TargetFileNameBackup>
+      <TargetFileName>$(JamNetTargetFileName).exe</TargetFileName>
+    </PropertyGroup>
+    <Warning Text="TGT: [$(TargetFileName)]" />
+
+    <ItemGroup>
+      <AppConfigWithTargetPath Remove="@(AppConfigWithTargetPath)" />
+      <AppConfigWithTargetPath Include="$(AppConfig)" Condition="'$(AppConfig)'!=''">
+        <TargetPath>$(TargetFileName).config</TargetPath>
+      </AppConfigWithTargetPath>
+
+      <_DeploymentManifestEntryPoint Remove="@(_DeploymentManifestEntryPoint)" />
+      <_DeploymentManifestEntryPoint Include="@(IntermediateAssembly)">
+        <TargetPath>$(TargetFileName)</TargetPath>
+      </_DeploymentManifestEntryPoint>
+    </ItemGroup>
+
+    <PropertyGroup>
+      <TargetFileName>$(_TargetFileNameBackup)</TargetFileName>
+      <_TargetFileNameBackup></_TargetFileNameBackup>
+    </PropertyGroup>
+    <Warning Text="TGT: [$(TargetFileName)]" />
+  </Target>
 </Project>
