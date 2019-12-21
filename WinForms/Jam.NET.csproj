@@ -17,6 +17,8 @@
     <PlatformTarget>AnyCPU</PlatformTarget>
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
+    <ApplicationVersion>0.3.0.*</ApplicationVersion>
+    <!-- <ApplicationRevision>1</ApplicationRevision> -->
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
