@@ -75,6 +75,7 @@
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Audio\ClickMediaStreamSource.cs" />
     <Compile Include="Audio\FFmpegJcfPlayer.cs" />
     <Compile Include="Forms\Renderers\UWPVerticalSliderRenderer.cs" />
     <Compile Include="MainPage.xaml.cs">
