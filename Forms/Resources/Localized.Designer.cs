@@ -348,15 +348,5 @@ namespace Jammit.Forms.Resources {
                 return ResourceManager.GetString("SongSearch_Placeholder", resourceCulture);
             }
         }
-        
-        /// <summary>
-        ///   Looks up a localized resource of type System.Byte[].
-        /// </summary>
-        internal static byte[] stick {
-            get {
-                object obj = ResourceManager.GetObject("stick", resourceCulture);
-                return ((byte[])(obj));
-            }
-        }
     }
 }
