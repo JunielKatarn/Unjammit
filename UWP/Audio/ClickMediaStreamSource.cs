@@ -32,6 +32,34 @@ namespace Jammit.Audio
 
     public MediaStreamSource MediaStreamSource { get; }
 
+    private Model.Beat FindBeat(double totalSeconds, int start, int end)
+    {
+      int mid = (start + end) / 2;
+      if (mid == start)
+      {
+        return _media.Beats[mid];
+      }
+      else if (_media.Beats[mid].Time < totalSeconds)
+      {
+        return FindBeat(totalSeconds, mid, end);
+      }
+      else if (_media.Beats[mid].Time > totalSeconds)
+      {
+        // If [mid] is the very next major element, finish.
+        if (_media.Beats[mid - 1].Time <= totalSeconds)
+        {
+          return _media.Beats[mid - 1];
+        }
+
+        return FindBeat(totalSeconds, start, mid);
+      }
+      else
+      {
+        // Unlikely, double equality.
+        return _media.Beats[mid];
+      }
+    }
+
     private MediaStreamSample NextSample()
     {
       IBuffer buffer = null;
