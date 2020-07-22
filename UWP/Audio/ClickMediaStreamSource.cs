@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Media.Core;
 using Windows.Media.MediaProperties;
+using Windows.Security.Cryptography;
 using Windows.Storage.Streams;
 
 namespace Jammit.Audio
@@ -22,6 +23,8 @@ namespace Jammit.Audio
       _descriptor = new AudioStreamDescriptor(AudioEncodingProperties.CreatePcm(44100, 2, 16));
       MediaStreamSource = new MediaStreamSource(_descriptor);
       MediaStreamSource.Duration = media.Length;
+      MediaStreamSource.CanSeek = true;
+
       MediaStreamSource.Starting += OnStarting;
       MediaStreamSource.SampleRequested += OnSampleRequested;
       MediaStreamSource.SwitchStreamsRequested += OnSwitchStreamsRequested;
@@ -60,9 +63,19 @@ namespace Jammit.Audio
       }
     }
 
+    byte[] _erasme = new byte[5292];
+
     private MediaStreamSample NextSample()
     {
-      IBuffer buffer = null;
+      //sample duration = 64
+      //sample "size" 5292
+      //{00:00:08.7000000} => 1534680
+      //{00:02:36.5910000} => 27926527
+      //
+      // {00:00:35.374716} => (6221096 / 4 + 4751) / 44100
+      // "DELTA" = 5292 => _samplePos * 4
+      IBuffer buffer = CryptographicBuffer.CreateFromByteArray(_erasme);
+
       var result = MediaStreamSample.CreateFromBuffer(buffer, TimeSpan.Zero);
 
       return result;
@@ -70,12 +83,35 @@ namespace Jammit.Audio
 
     private void OnStarting(MediaStreamSource sender, MediaStreamSourceStartingEventArgs args)
     {
-      throw new NotImplementedException();
+      var x = args.Request.StartPosition ?? TimeSpan.Zero;
     }
+
+    /*
+mutexGuard.lock();
+if (mss != nullptr)
+{
+if (currentAudioStream && args->Request->StreamDescriptor == currentAudioStream->StreamDescriptor)
+{
+  args->Request->Sample = currentAudioStream->GetNextSample();
+}
+else if (currentVideoStream && args->Request->StreamDescriptor == currentVideoStream->StreamDescriptor)
+{
+  args->Request->Sample = currentVideoStream->GetNextSample();
+}
+else
+{
+  args->Request->Sample = nullptr;
+}
+}
+mutexGuard.unlock();
+ */
 
     private void OnSampleRequested(MediaStreamSource sender, MediaStreamSourceSampleRequestedEventArgs args)
     {
-      throw new NotImplementedException();
+      if (args.Request.StreamDescriptor == _descriptor)
+        args.Request.Sample = NextSample();
+      else
+        throw new Exception("chiaaaaaale");
     }
 
     private void OnSwitchStreamsRequested(MediaStreamSource sender, MediaStreamSourceSwitchStreamsRequestedEventArgs args)

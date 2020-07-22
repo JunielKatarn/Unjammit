@@ -19,7 +19,7 @@ namespace Jammit.Audio
       var instance = new FFmpegJcfPlayer();
 
       // Capacity => instruments + backing (TODO: + click)
-      instance._players = new Dictionary<PlayableTrackInfo, (MediaPlayer Player, FFmpegInterop.FFmpegInteropMSS)>(media.InstrumentTracks.Count + 1);
+      instance._players = new Dictionary<PlayableTrackInfo, (MediaPlayer Player, FFmpegInterop.FFmpegInteropMSS)>(media.InstrumentTracks.Count + 1 + 1);
       instance._mediaTimelineController = new MediaTimelineController();
       instance._mediaTimelineController.PositionChanged += instance.MediaTimelineController_PositionChanged;
       instance._mediaTimelineController.StateChanged += instance.MediaTimelineController_StateChanged;
@@ -32,6 +32,16 @@ namespace Jammit.Audio
       }
       await instance.InitPlayer(media.BackingTrack, mediaPath);
 
+      //init click track
+      //var uri = $"{mediaPath}/{media.ClickTrack.Identifier.ToString().ToUpper()}_jcf"
+      instance._clickSource = new ClickMediaStreamSource(media);
+      instance._clickPlayer = new MediaPlayer();
+      instance._clickPlayer.CommandManager.IsEnabled = false;
+      instance._clickPlayer.TimelineController = instance._mediaTimelineController;
+      var source = Windows.Media.Core.MediaSource.CreateFromMediaStreamSource(instance._clickSource.MediaStreamSource);
+      instance._clickPlayer.Source = source;
+      //init click track
+
       instance.Length = media.Length;
 
       return instance;
@@ -43,6 +53,8 @@ namespace Jammit.Audio
 
     private Dictionary<PlayableTrackInfo, (MediaPlayer Player, FFmpegInterop.FFmpegInteropMSS)> _players;
     private MediaTimelineController _mediaTimelineController;
+    private MediaPlayer _clickPlayer;
+    private ClickMediaStreamSource _clickSource;
 
     private async Task InitPlayer(PlayableTrackInfo track, string mediaPath)
     {
@@ -56,7 +68,8 @@ namespace Jammit.Audio
       var player = new MediaPlayer();
       player.CommandManager.IsEnabled = false;
       player.TimelineController = _mediaTimelineController;
-      player.Source = Windows.Media.Core.MediaSource.CreateFromMediaStreamSource(ffmpegSource.GetMediaStreamSource());
+      var source = Windows.Media.Core.MediaSource.CreateFromMediaStreamSource(ffmpegSource.GetMediaStreamSource());
+      player.Source = source;
 
       // FFmpegInteropMSS instances hold the stream reference. Their scope must be kept.
       _players[track] = (player, ffmpegSource);
