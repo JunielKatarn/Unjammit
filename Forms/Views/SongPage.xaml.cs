@@ -6,6 +6,7 @@ using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
 using Jammit.Model;
+using Xamarin.Forms.Shapes;
 
 namespace Jammit.Forms.Views
 {
@@ -239,7 +240,8 @@ namespace Jammit.Forms.Views
       //  $"CLO.H {ControlsLayout.Height}\n" +
       //  $"FLO.H {FooterLayout.Height}";
 #else
-      TimelineImage.Text = $"{Media.Sections[_sectionIndex].Name}\n\n\n\n\n";
+      //TimelineImage.Text = $"{Media.Sections[_sectionIndex].Name}\n\n\n\n\n";
+      TimelineImage.Text = $"{Media.Sections[_sectionIndex].Name}";
 #endif
     }
 

@@ -63,7 +63,7 @@ namespace Jammit.UWP
         rootFrame.NavigationFailed += OnNavigationFailed;
 
         //TODO: Remove once RadioButton is promoted from Experimental.
-        Xamarin.Forms.Forms.SetFlags("RadioButton_Experimental");
+        Xamarin.Forms.Forms.SetFlags("RadioButton_Experimental", "Shapes_Experimental");
 
         Xamarin.Forms.Forms.Init(e);
 

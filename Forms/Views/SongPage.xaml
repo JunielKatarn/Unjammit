@@ -160,8 +160,15 @@
                MaxLines="{OnIdiom Phone=6, Default=8}"
                VerticalTextAlignment="Start"
                Style="{StaticResource Key=ProgressStyle}"
-               Text="&#x0a;&#x0a;&#x0a;&#x0a;&#x0a;&#x0a;&#x0a;&#x0a;"
                />
+
+        <Path x:Name="WaveformPath"
+              HorizontalOptions="Fill"
+              VerticalOptions="Fill"
+              Stroke="Green"
+              Fill="Black"
+              Data="M251,0 C266.463973,-2.84068575e-15 279,12.536027 279,28 L279,276 C279,291.463973 266.463973,304 251,304 L214.607,304 L214.629319,304.009394 L202.570739,304.356889 C196.091582,304.5436 190.154631,308.020457 186.821897,313.579883 L186.821897,313.579883 L183.402481,319.283905 C177.100406,337.175023 160.04792,350 140,350 C119.890172,350 102.794306,337.095694 96.5412691,319.115947 L96.5273695,319.126964 L92.8752676,313.28194 C89.5084023,307.893423 83.6708508,304.544546 77.3197008,304.358047 L65.133,304 L28,304 C12.536027,304 1.8937905e-15,291.463973 0,276 L0,28 C-1.8937905e-15,12.536027 12.536027,2.84068575e-15 28,0 L251,0 Z"
+              />
 
         <StackLayout Orientation="Horizontal" HorizontalOptions="CenterAndExpand" VerticalOptions="End">
           <Button x:Name="RepeatButton"  Text="🔁" Style="{StaticResource Key=PlaybackButtonStyle}" IsEnabled="False" />
