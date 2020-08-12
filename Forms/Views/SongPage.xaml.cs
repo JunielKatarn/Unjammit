@@ -76,6 +76,17 @@ namespace Jammit.Forms.Views
 
       if (AlbumImage.IsVisible)
         AlbumImage.Source = ImageSource.FromStream(() => { return App.MediaLoader.LoadAlbumCover(Media); });
+
+      ////0,0 10,30, 15,0 18,60 23,30 35,30 40,0 43,60 48,30 100,30
+      //WaveformSegment.Points.Add(new Point(010, 030));
+      //WaveformSegment.Points.Add(new Point(015, 010));
+      //WaveformSegment.Points.Add(new Point(018, 060));
+      //WaveformSegment.Points.Add(new Point(023, 030));
+      //WaveformSegment.Points.Add(new Point(035, 040));
+      //WaveformSegment.Points.Add(new Point(040, 000));
+      //WaveformSegment.Points.Add(new Point(043, 060));
+      //WaveformSegment.Points.Add(new Point(048, 030));
+      //WaveformSegment.Points.Add(new Point(100, 030));
     }
 
     protected override void OnSizeAllocated(double width, double height)
