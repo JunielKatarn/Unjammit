@@ -163,6 +163,7 @@
                />
 
         <StackLayout
+          x:Name="WaveformLayout"
           Background="Black"
           Padding="0"
           Margin="0"
@@ -181,9 +182,7 @@
                     <PathFigure StartPoint="0,0">
                       <PathFigure.Segments>
                         <PathSegmentCollection>
-                          <!--<PolyBezierSegment x:Name="WaveformSegment" Points="0,0 100,0 150,100 150,0 200,0 300,10" />-->
-                          <PolyLineSegment x:Name="WaveformSegment" Points="0,0 10,30, 15,0 18,60 23,30 35,30 40,0 43,60 48,30 100,30" />
-                          <!--<PolyLineSegment x:Name="WaveformSegment" Points="0,0 1,1" />-->
+                          <PolyLineSegment x:Name="WaveformSegment" Points="" />
                         </PathSegmentCollection>
                       </PathFigure.Segments>
                     </PathFigure>
