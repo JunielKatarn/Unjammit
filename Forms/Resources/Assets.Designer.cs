@@ -63,9 +63,9 @@ namespace Jammit.Forms.Resources {
         /// <summary>
         ///   Looks up a localized resource of type System.Byte[].
         /// </summary>
-        public static byte[] stick {
+        public static byte[] Stick {
             get {
-                object obj = ResourceManager.GetObject("stick", resourceCulture);
+                object obj = ResourceManager.GetObject("Stick", resourceCulture);
                 return ((byte[])(obj));
             }
         }
