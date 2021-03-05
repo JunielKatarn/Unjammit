@@ -29,8 +29,8 @@ namespace Jammit.Audio
       MediaStreamSource.SampleRequested += OnSampleRequested;
       MediaStreamSource.SwitchStreamsRequested += OnSwitchStreamsRequested;
 
-      _click = new short[Forms.Resources.Assets.stick.Length / 2];
-      System.Buffer.BlockCopy(Forms.Resources.Assets.stick, 0, _click, 0, Forms.Resources.Assets.stick.Length);
+      _click = new short[Forms.Resources.Assets.Stick.Length / 2];
+      System.Buffer.BlockCopy(Forms.Resources.Assets.Stick, 0, _click, 0, Forms.Resources.Assets.Stick.Length);
     }
 
     public MediaStreamSource MediaStreamSource { get; }
