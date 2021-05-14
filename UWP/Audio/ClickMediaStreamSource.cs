@@ -18,7 +18,6 @@ namespace Jammit.Audio
     ConcurrentQueue<IBuffer> _buffersQueue;
     MediaPlaybackSession _session;
     TimeSpan _actualPosition;
-    TimeSpan _lastPosition;
 
     public ClickMediaStreamSource(Model.JcfMedia media)
     {
@@ -62,10 +61,16 @@ namespace Jammit.Audio
       }
     }
 
+    TimeSpan _x = TimeSpan.Zero;
     private void OnSessionPositionChanged(MediaPlaybackSession sender, object args)
     {
-      _lastPosition = _actualPosition;
-      _actualPosition = sender.Position;
+      // Not triggered unless _actualPosition is manually updated on RequestSample. Else, huge mem. leak
+      // TODO: Figure out how to reliably get position from session/player/controller.
+      if (sender.Position > TimeSpan.Zero)
+      {
+        //_actualPosition = sender.Position;
+        _x = sender.Position;
+      }
     }
 
     private Model.Beat FindBeat(double totalSeconds, int start, int end)
@@ -102,8 +107,8 @@ namespace Jammit.Audio
       bool dequeued = this._buffersQueue.TryDequeue(out buffer);
       if (!dequeued)
       {
-        buffer = new Buffer(5292);// Define sample buffer size
-        buffer.Length = 5292;
+        //5292 ??
+        buffer = new Buffer(256);// From FFmpegInterop::UncompressedSampleProvider::CreateNextSampleBuffer~69
       }
 
       return buffer;
@@ -111,7 +116,8 @@ namespace Jammit.Audio
 
     private void OnStarting(MediaStreamSource sender, MediaStreamSourceStartingEventArgs args)
     {
-      args.Request.SetActualStartPosition(args.Request.StartPosition ?? TimeSpan.Zero);
+      //args.Request.SetActualStartPosition(args.Request.StartPosition ?? TimeSpan.Zero);
+      args.Request.SetActualStartPosition(_actualPosition);
     }
 
     private void OnSampleRequested(MediaStreamSource sender, MediaStreamSourceSampleRequestedEventArgs args)
@@ -123,8 +129,7 @@ namespace Jammit.Audio
       if (_descriptor == args.Request.StreamDescriptor)
       {
         //176,400 bytes per second => 44.1kHz * 16bits * 2channels = 44100 * 32 b/s = 1411200b/s / 8b/B = 176400 B/s
-        var instantBuffer = GetBuffer();
-        var buffer = instantBuffer;//TODO
+        var buffer = GetBuffer();
 
         if (buffer.Length > 0)
         {
@@ -137,16 +142,18 @@ namespace Jammit.Audio
           //                        (tBase.num / tBase.den => 1 / 441000) * 10^7 = 10000000 / 44100 = 226.75736961451247
           //                      Pos = _tbf * pts - _sOff(=0)
           //                      Dur = _tbf * dur(=64) // A time period expressed in 100-nanosecond units (ticks) => 1s * 10^-7 => 1 / 1000000
-          sample = MediaStreamSample.CreateFromBuffer(buffer, _session.Position);
+          sample = MediaStreamSample.CreateFromBuffer(buffer, _actualPosition);
           sample.Processed += OnSampleProcessed;
 
           // 10000000 / 44100 * 64 => 10^-7s
           //sample.Duration = TimeSpan.FromSeconds(buffer.Length / 176400);
           sample.Duration = TimeSpan.FromTicks(10000000 / 44100 * 64);
+
+          _actualPosition += sample.Duration;
         }
         else
         {
-          // current time / seek 0
+          _actualPosition = TimeSpan.Zero;
         }
       }
 
@@ -160,7 +167,7 @@ namespace Jammit.Audio
 
     private void OnClosed(MediaStreamSource sender, MediaStreamSourceClosedEventArgs args)
     {
-      // Set time to 0
+      _actualPosition = TimeSpan.Zero;
     }
 
     private void OnSampleProcessed(MediaStreamSample sender, object args)
