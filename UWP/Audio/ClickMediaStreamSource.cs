@@ -1,12 +1,12 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using System.Collections.Concurrent;
+
 using Windows.Media.Core;
 using Windows.Media.MediaProperties;
-using Windows.Security.Cryptography;
 using Windows.Storage.Streams;
+
+using Buffer = Windows.Storage.Streams.Buffer;
+using MediaPlaybackSession = Windows.Media.Playback.MediaPlaybackSession;
 
 namespace Jammit.Audio
 {
@@ -15,6 +15,10 @@ namespace Jammit.Audio
     readonly Model.JcfMedia _media;
     readonly AudioStreamDescriptor _descriptor;
     readonly short[] _click;
+    ConcurrentQueue<IBuffer> _buffersQueue;
+    MediaPlaybackSession _session;
+    TimeSpan _actualPosition;
+    TimeSpan _lastPosition;
 
     public ClickMediaStreamSource(Model.JcfMedia media)
     {
@@ -28,12 +32,41 @@ namespace Jammit.Audio
       MediaStreamSource.Starting += OnStarting;
       MediaStreamSource.SampleRequested += OnSampleRequested;
       MediaStreamSource.SwitchStreamsRequested += OnSwitchStreamsRequested;
+      MediaStreamSource.Closed += OnClosed;
+
+      _buffersQueue = new ConcurrentQueue<IBuffer>();
 
       _click = new short[Forms.Resources.Assets.Stick.Length / 2];
       System.Buffer.BlockCopy(Forms.Resources.Assets.Stick, 0, _click, 0, Forms.Resources.Assets.Stick.Length);
     }
 
     public MediaStreamSource MediaStreamSource { get; }
+
+    public MediaPlaybackSession PlaybackSession
+    {
+      get => _session;
+
+      set
+      {
+        if (_session != null)
+        {
+          _session.PositionChanged -= OnSessionPositionChanged;
+        }
+
+        _session = value;
+
+        if (value != null)
+        {
+          _session.PositionChanged += OnSessionPositionChanged;
+        }
+      }
+    }
+
+    private void OnSessionPositionChanged(MediaPlaybackSession sender, object args)
+    {
+      _lastPosition = _actualPosition;
+      _actualPosition = sender.Position;
+    }
 
     private Model.Beat FindBeat(double totalSeconds, int start, int end)
     {
@@ -63,61 +96,77 @@ namespace Jammit.Audio
       }
     }
 
-    byte[] _erasme = new byte[5292];
-
-    private MediaStreamSample NextSample()
+    private IBuffer GetBuffer()
     {
-      //sample duration = 64
-      //sample "size" 5292
-      //{00:00:08.7000000} => 1534680
-      //{00:02:36.5910000} => 27926527
-      //
-      // {00:00:35.374716} => (6221096 / 4 + 4751) / 44100
-      // "DELTA" = 5292 => _samplePos * 4
-      IBuffer buffer = CryptographicBuffer.CreateFromByteArray(_erasme);
+      IBuffer buffer;
+      bool dequeued = this._buffersQueue.TryDequeue(out buffer);
+      if (!dequeued)
+      {
+        buffer = new Buffer(5292);// Define sample buffer size
+        buffer.Length = 5292;
+      }
 
-      var result = MediaStreamSample.CreateFromBuffer(buffer, TimeSpan.Zero);
-
-      return result;
+      return buffer;
     }
 
     private void OnStarting(MediaStreamSource sender, MediaStreamSourceStartingEventArgs args)
     {
-      var x = args.Request.StartPosition ?? TimeSpan.Zero;
+      args.Request.SetActualStartPosition(args.Request.StartPosition ?? TimeSpan.Zero);
     }
-
-    /*
-mutexGuard.lock();
-if (mss != nullptr)
-{
-if (currentAudioStream && args->Request->StreamDescriptor == currentAudioStream->StreamDescriptor)
-{
-  args->Request->Sample = currentAudioStream->GetNextSample();
-}
-else if (currentVideoStream && args->Request->StreamDescriptor == currentVideoStream->StreamDescriptor)
-{
-  args->Request->Sample = currentVideoStream->GetNextSample();
-}
-else
-{
-  args->Request->Sample = nullptr;
-}
-}
-mutexGuard.unlock();
- */
 
     private void OnSampleRequested(MediaStreamSource sender, MediaStreamSourceSampleRequestedEventArgs args)
     {
-      if (args.Request.StreamDescriptor == _descriptor)
-        args.Request.Sample = NextSample();
-      else
-        throw new Exception("chiaaaaaale");
+      if (MediaStreamSource == null)
+        return;
+
+      MediaStreamSample sample = null;
+      if (_descriptor == args.Request.StreamDescriptor)
+      {
+        //176,400 bytes per second => 44.1kHz * 16bits * 2channels = 44100 * 32 b/s = 1411200b/s / 8b/B = 176400 B/s
+        var instantBuffer = GetBuffer();
+        var buffer = instantBuffer;//TODO
+
+        if (buffer.Length > 0)
+        {
+          // NextSample()
+          // From FFmpegInterpoX: pts ~= 484033; dur = 64; nextPts = pts + dur
+          //                      aBuffSz = 256; rsampledDataSz = 64; sz = min(aBuffSz, rsmplDtSz * 2ch * 2BxSmpl) = 256
+          //                      actDur = avFr.nbSmpl(=64) * avStrm.tBase.den(=44100) / (_osr(=44100) * avStrm.tBase.num(=1) ) = 64
+          //                      pts @20s ~= 915649; @40 ~= 1811969 => 45299.225 ~> 44100 pts/s
+          //                      _tbf = av_q2d(avStr.tBase) * 10000000 = 226.75736961451247 =>
+          //                        (tBase.num / tBase.den => 1 / 441000) * 10^7 = 10000000 / 44100 = 226.75736961451247
+          //                      Pos = _tbf * pts - _sOff(=0)
+          //                      Dur = _tbf * dur(=64) // A time period expressed in 100-nanosecond units (ticks) => 1s * 10^-7 => 1 / 1000000
+          sample = MediaStreamSample.CreateFromBuffer(buffer, _session.Position);
+          sample.Processed += OnSampleProcessed;
+
+          // 10000000 / 44100 * 64 => 10^-7s
+          //sample.Duration = TimeSpan.FromSeconds(buffer.Length / 176400);
+          sample.Duration = TimeSpan.FromTicks(10000000 / 44100 * 64);
+        }
+        else
+        {
+          // current time / seek 0
+        }
+      }
+
+      args.Request.Sample = sample;
     }
 
     private void OnSwitchStreamsRequested(MediaStreamSource sender, MediaStreamSourceSwitchStreamsRequestedEventArgs args)
     {
-      throw new NotImplementedException();
+      //throw new NotImplementedException();
     }
 
+    private void OnClosed(MediaStreamSource sender, MediaStreamSourceClosedEventArgs args)
+    {
+      // Set time to 0
+    }
+
+    private void OnSampleProcessed(MediaStreamSample sender, object args)
+    {
+      _buffersQueue.Enqueue(sender.Buffer);
+      sender.Processed -= OnSampleProcessed;
+    }
   }
 }

@@ -38,8 +38,9 @@ namespace Jammit.Audio
       instance._clickPlayer = new MediaPlayer();
       instance._clickPlayer.CommandManager.IsEnabled = false;
       instance._clickPlayer.TimelineController = instance._mediaTimelineController;
-      var source = Windows.Media.Core.MediaSource.CreateFromMediaStreamSource(instance._clickSource.MediaStreamSource);
+      var source = MediaSource.CreateFromMediaStreamSource(instance._clickSource.MediaStreamSource);
       instance._clickPlayer.Source = source;
+      instance._clickSource.PlaybackSession = instance._clickPlayer.PlaybackSession;
       //init click track
 
       instance.Length = media.Length;
@@ -68,7 +69,7 @@ namespace Jammit.Audio
       var player = new MediaPlayer();
       player.CommandManager.IsEnabled = false;
       player.TimelineController = _mediaTimelineController;
-      var source = Windows.Media.Core.MediaSource.CreateFromMediaStreamSource(ffmpegSource.GetMediaStreamSource());
+      var source = MediaSource.CreateFromMediaStreamSource(ffmpegSource.GetMediaStreamSource());
       player.Source = source;
 
       // FFmpegInteropMSS instances hold the stream reference. Their scope must be kept.
