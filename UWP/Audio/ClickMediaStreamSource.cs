@@ -16,8 +16,7 @@ namespace Jammit.Audio
     readonly AudioStreamDescriptor _descriptor;
     readonly short[] _click;
     ConcurrentQueue<IBuffer> _buffersQueue;
-    MediaPlaybackSession _session;
-    TimeSpan _actualPosition = TimeSpan.Zero;
+    TimeSpan _currentPosition = TimeSpan.Zero;
 
     public ClickMediaStreamSource(Model.JcfMedia media)
     {
@@ -40,26 +39,6 @@ namespace Jammit.Audio
     }
 
     public MediaStreamSource MediaStreamSource { get; }
-
-    public MediaPlaybackSession PlaybackSession
-    {
-      get => _session;
-
-      set
-      {
-        if (_session != null)
-        {
-          _session.PositionChanged -= OnSessionPositionChanged;
-        }
-
-        _session = value;
-
-        if (value != null)
-        {
-          _session.PositionChanged += OnSessionPositionChanged;
-        }
-      }
-    }
 
     private Model.Beat FindBeat(double totalSeconds, int start, int end)
     {
@@ -110,7 +89,7 @@ namespace Jammit.Audio
     private void OnStarting(MediaStreamSource sender, MediaStreamSourceStartingEventArgs args)
     {
       //args.Request.SetActualStartPosition(args.Request.StartPosition ?? TimeSpan.Zero);
-      args.Request.SetActualStartPosition(_actualPosition);
+      args.Request.SetActualStartPosition(_currentPosition);
     }
 
     private void OnSampleRequested(MediaStreamSource sender, MediaStreamSourceSampleRequestedEventArgs args)
@@ -132,17 +111,17 @@ namespace Jammit.Audio
           //                        (tBase.num / tBase.den => 1 / 441000) * 10^7 = 10000000 / 44100 = 226.75736961451247
           //                      Pos = _tbf * pts - _sOff(=0)
           //                      Dur = _tbf * dur(=64) // A time period expressed in 100-nanosecond units (ticks) => 1s * 10^-7 => 1 / 1000000
-          sample = MediaStreamSample.CreateFromBuffer(buffer, _actualPosition);
+          sample = MediaStreamSample.CreateFromBuffer(buffer, _currentPosition);
           sample.Processed += OnSampleProcessed;
 
           // 10000000 / 44100 * 64 => 10^-7s
           sample.Duration = TimeSpan.FromTicks(10000000 / 44100 * 64);// TODO: Infer from audio format
 
-          _actualPosition += sample.Duration;
+          _currentPosition += sample.Duration;
         }
         else
         {
-          _actualPosition = TimeSpan.Zero;
+          _currentPosition = TimeSpan.Zero;
         }
       }
 
@@ -156,25 +135,13 @@ namespace Jammit.Audio
 
     private void OnClosed(MediaStreamSource sender, MediaStreamSourceClosedEventArgs args)
     {
-      _actualPosition = TimeSpan.Zero;
+      _currentPosition = TimeSpan.Zero;
     }
 
     private void OnSampleProcessed(MediaStreamSample sender, object args)
     {
       _buffersQueue.Enqueue(sender.Buffer);
       sender.Processed -= OnSampleProcessed;
-    }
-
-    TimeSpan _x = TimeSpan.Zero;
-    private void OnSessionPositionChanged(MediaPlaybackSession sender, object args)
-    {
-      // Not triggered unless _actualPosition is manually updated on RequestSample. Else, huge mem. leak
-      // TODO: Figure out how to reliably get position from session/player/controller.
-      if (sender.Position > TimeSpan.Zero)
-      {
-        //_actualPosition = sender.Position;
-        _x = sender.Position;
-      }
     }
   }
 }

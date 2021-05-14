@@ -38,9 +38,7 @@ namespace Jammit.Audio
       instance._clickPlayer = new MediaPlayer();
       instance._clickPlayer.CommandManager.IsEnabled = false;
       instance._clickPlayer.TimelineController = instance._mediaTimelineController;
-      var source = MediaSource.CreateFromMediaStreamSource(instance._clickSource.MediaStreamSource);
-      instance._clickPlayer.Source = source;
-      instance._clickSource.PlaybackSession = instance._clickPlayer.PlaybackSession;
+      instance._clickPlayer.Source = MediaSource.CreateFromMediaStreamSource(instance._clickSource.MediaStreamSource);
       //init click track
 
       instance.Length = media.Length;
