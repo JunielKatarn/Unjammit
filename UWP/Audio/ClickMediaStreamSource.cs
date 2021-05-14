@@ -17,7 +17,7 @@ namespace Jammit.Audio
     readonly short[] _click;
     ConcurrentQueue<IBuffer> _buffersQueue;
     MediaPlaybackSession _session;
-    TimeSpan _actualPosition;
+    TimeSpan _actualPosition = TimeSpan.Zero;
 
     public ClickMediaStreamSource(Model.JcfMedia media)
     {
@@ -61,18 +61,6 @@ namespace Jammit.Audio
       }
     }
 
-    TimeSpan _x = TimeSpan.Zero;
-    private void OnSessionPositionChanged(MediaPlaybackSession sender, object args)
-    {
-      // Not triggered unless _actualPosition is manually updated on RequestSample. Else, huge mem. leak
-      // TODO: Figure out how to reliably get position from session/player/controller.
-      if (sender.Position > TimeSpan.Zero)
-      {
-        //_actualPosition = sender.Position;
-        _x = sender.Position;
-      }
-    }
-
     private Model.Beat FindBeat(double totalSeconds, int start, int end)
     {
       int mid = (start + end) / 2;
@@ -104,11 +92,16 @@ namespace Jammit.Audio
     private IBuffer GetBuffer()
     {
       IBuffer buffer;
-      bool dequeued = this._buffersQueue.TryDequeue(out buffer);
+      bool dequeued = _buffersQueue.TryDequeue(out buffer);
       if (!dequeued)
       {
-        //5292 ??
-        buffer = new Buffer(256);// From FFmpegInterop::UncompressedSampleProvider::CreateNextSampleBuffer~69
+        // FFmpegInterop::UncompressedSampleProvider::CreateNextSampleBuffer~69 suggests 256, but disrupts playback.
+        //buffer = new Buffer(4096);// works-ish
+        //buffer = new Buffer(5292);// why?? = 176400 / 33.3333...
+        buffer = new Buffer(176400);// https://www.alsa-project.org/wiki/FramesPeriods#:~:text=e.g.,PCM%20stream%20is%2012%20bytes.
+                                    // channels * sampleSize * analogRate * = 2ch * 2B/smpl * 44100 smpl/s
+                                    // TODO: Infer from audio format
+        buffer.Length = buffer.Capacity;
       }
 
       return buffer;
@@ -122,9 +115,6 @@ namespace Jammit.Audio
 
     private void OnSampleRequested(MediaStreamSource sender, MediaStreamSourceSampleRequestedEventArgs args)
     {
-      if (MediaStreamSource == null)
-        return;
-
       MediaStreamSample sample = null;
       if (_descriptor == args.Request.StreamDescriptor)
       {
@@ -146,8 +136,7 @@ namespace Jammit.Audio
           sample.Processed += OnSampleProcessed;
 
           // 10000000 / 44100 * 64 => 10^-7s
-          //sample.Duration = TimeSpan.FromSeconds(buffer.Length / 176400);
-          sample.Duration = TimeSpan.FromTicks(10000000 / 44100 * 64);
+          sample.Duration = TimeSpan.FromTicks(10000000 / 44100 * 64);// TODO: Infer from audio format
 
           _actualPosition += sample.Duration;
         }
@@ -174,6 +163,18 @@ namespace Jammit.Audio
     {
       _buffersQueue.Enqueue(sender.Buffer);
       sender.Processed -= OnSampleProcessed;
+    }
+
+    TimeSpan _x = TimeSpan.Zero;
+    private void OnSessionPositionChanged(MediaPlaybackSession sender, object args)
+    {
+      // Not triggered unless _actualPosition is manually updated on RequestSample. Else, huge mem. leak
+      // TODO: Figure out how to reliably get position from session/player/controller.
+      if (sender.Position > TimeSpan.Zero)
+      {
+        //_actualPosition = sender.Position;
+        _x = sender.Position;
+      }
     }
   }
 }
