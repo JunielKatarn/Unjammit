@@ -87,31 +87,6 @@ namespace Jammit.Forms.Views
 
       if (AlbumImage.IsVisible)
         AlbumImage.Source = ImageSource.FromStream(() => { return App.MediaLoader.LoadAlbumCover(Media); });
-
-      //0,0 10,30, 15,0 18,60 23,30 35,30 40,0 43,60 48,30 100,30
-
-      WaveformLayout.Children.Remove(WaveformPath);
-      //WaveformSegment.Points.Add(new Point(000, 000));
-      //WaveformSegment.Points.Add(new Point(010, 030));
-      //WaveformSegment.Points.Add(new Point(015, 010));
-      //WaveformSegment.Points.Add(new Point(018, 060));
-      //WaveformSegment.Points.Add(new Point(023, 030));
-      //WaveformSegment.Points.Add(new Point(035, 040));
-      //WaveformSegment.Points.Add(new Point(040, 000));
-      //WaveformSegment.Points.Add(new Point(043, 060));
-      //WaveformSegment.Points.Add(new Point(048, 030));
-      //WaveformSegment.Points.Add(new Point(100, 030));
-
-      for(int i=0; i < _waveformData.Length; i++)
-      {
-        var p = new Point
-        {
-          X = i * WaveformLayout.Width / _waveformData.Length,
-          Y = _waveformData[i] * WaveformLayout.Height / 256 + WaveformLayout.Height / 2
-        };
-        WaveformSegment.Points.Add(p);
-      }
-      WaveformLayout.Children.Add(WaveformPath);
     }
 
     protected override void OnSizeAllocated(double width, double height)
@@ -486,6 +461,35 @@ namespace Jammit.Forms.Views
     void ScoreSelector_SelectedScoreChanged(object sender, EventArgs e)
     {
       SetScorePage(PageIndex);
+    }
+
+    private async void WaveformLayout_SizeChanged(object sender, EventArgs e)
+    {
+      if (WaveformLayout.Width <= 0 || WaveformLayout.Height <= 0)
+        return;
+
+      await Device.InvokeOnMainThreadAsync(() =>
+      {
+        WaveformLayout.Children.Remove(WaveformPath);
+        //TODO: Render only segment; increase index by 1
+        for (int i = 0; i < _waveformData.Length; i += _waveformData.Length / 500 + 1)
+        //for (int i = 0; i < _waveformData.Length; i++)
+        {
+          var p = new Point
+          {
+            X = i * WaveformLayout.Width / _waveformData.Length,
+            Y = _waveformData[i] * WaveformLayout.Height / 256 + WaveformLayout.Height / 2
+          };
+          WaveformSegment.Points.Add(p);
+        }
+        WaveformLayout.Children.Add(WaveformPath);
+      });
+    }
+
+    //TODO: Remove. For experimentation only.
+    private void RepeatButton_Clicked(object sender, EventArgs e)
+    {
+      (WaveformPath.RenderTransform as TranslateTransform).X -= 20;
     }
   }
 }

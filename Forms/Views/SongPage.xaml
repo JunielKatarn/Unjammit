@@ -186,13 +186,18 @@
           Padding="0"
           Margin="0"
           HorizontalOptions="FillAndExpand"
-          VerticalOptions="FillAndExpand">
+          VerticalOptions="FillAndExpand"
+          SizeChanged="WaveformLayout_SizeChanged"
+          >
           <Path x:Name="WaveformPath"
                 HorizontalOptions="Fill"
                 VerticalOptions="Fill"
                 Stroke="Green"
                 StrokeThickness="1"
                 >
+            <Path.RenderTransform>
+              <TranslateTransform X="0" Y="0" />
+            </Path.RenderTransform>
             <Path.Data>
               <PathGeometry>
                 <PathGeometry.Figures>
@@ -212,7 +217,7 @@
         </StackLayout>
 
         <StackLayout Orientation="Horizontal" HorizontalOptions="CenterAndExpand" VerticalOptions="End">
-          <Button x:Name="RepeatButton"  Text="🔁" Style="{StaticResource Key=PlaybackButtonStyle}" IsEnabled="False" />
+          <Button x:Name="RepeatButton"  Text="🔁" Style="{StaticResource Key=PlaybackButtonStyle}" IsEnabled="True" Clicked="RepeatButton_Clicked" />
           <Button x:Name="StartButton"   Text="⏬" Style="{StaticResource Key=PlaybackButtonStyle}" Clicked="StartButton_Clicked" />
           <Button x:Name="BackButton"    Text="⏪" Style="{StaticResource Key=PlaybackButtonStyle}" Clicked="BackButton_Clicked" />
           <Button x:Name="PlayButton"    Text="⏯" Style="{StaticResource Key=PlaybackButtonStyle}" Clicked="PlayButton_Clicked" />
