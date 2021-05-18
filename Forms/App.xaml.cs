@@ -14,9 +14,6 @@ namespace Jammit.Forms
   {
     public App()
     {
-      //TODO: Remove when Shapes leave experimental state.
-      Device.SetFlags(new string[] { "Shapes_Experimental", "RadioButton_Experimental" });
-
       InitializeComponent();
 
       App.Client = new Client.BasicHttpClient();
