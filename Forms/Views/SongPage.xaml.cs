@@ -35,6 +35,8 @@ namespace Jammit.Forms.Views
 
       instance.CloseButton.Text = "⬅️ " + instance.CloseButton.Text;
 
+      instance._waveformData = App.MediaLoader.LoadWaveform(instance.Media);
+
       return instance;
     }
 
@@ -46,7 +48,8 @@ namespace Jammit.Forms.Views
     #region private fields
 
     private int _beatIndex;
-    int _sectionIndex;
+    private int _sectionIndex;
+    private sbyte[] _waveformData;
 
     /// <summary>
     /// Platforms can vary their Player/Tracker uninitializing order.

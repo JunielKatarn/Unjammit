@@ -46,6 +46,17 @@ namespace Jammit.Model
       return File.OpenRead(Path.Combine(media.Path, "cover.jpg"));
     }
 
+    public sbyte[] LoadWaveform(JcfMedia media)
+    {
+      var path = Path.Combine(media.Path, "music.waveform");
+      using (var fs = new FileStream(path, FileMode.Open))
+      using (var ms = new MemoryStream())
+      {
+        fs.CopyTo(ms);
+        return new UnionArray { Bytes = ms.ToArray() }.Sbytes;
+      }
+    }
+
     public Stream LoadNotation(JcfMedia media, ScoreInfo score, uint index)
     {
       var trackId = score.Track.Identifier.ToString().ToUpper();

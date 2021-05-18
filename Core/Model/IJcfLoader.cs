@@ -12,6 +12,8 @@ namespace Jammit.Model
 
     System.IO.Stream LoadAlbumCover(JcfMedia media);
 
+    sbyte[] LoadWaveform(JcfMedia media);
+
     void LoadFullSongInfo(SongInfo song, string songPath);
   }
 }
