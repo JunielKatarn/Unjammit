@@ -91,16 +91,26 @@ namespace Jammit.Forms.Views
       //0,0 10,30, 15,0 18,60 23,30 35,30 40,0 43,60 48,30 100,30
 
       WaveformLayout.Children.Remove(WaveformPath);
-      WaveformSegment.Points.Add(new Point(000, 000));
-      WaveformSegment.Points.Add(new Point(010, 030));
-      WaveformSegment.Points.Add(new Point(015, 010));
-      WaveformSegment.Points.Add(new Point(018, 060));
-      WaveformSegment.Points.Add(new Point(023, 030));
-      WaveformSegment.Points.Add(new Point(035, 040));
-      WaveformSegment.Points.Add(new Point(040, 000));
-      WaveformSegment.Points.Add(new Point(043, 060));
-      WaveformSegment.Points.Add(new Point(048, 030));
-      WaveformSegment.Points.Add(new Point(100, 030));
+      //WaveformSegment.Points.Add(new Point(000, 000));
+      //WaveformSegment.Points.Add(new Point(010, 030));
+      //WaveformSegment.Points.Add(new Point(015, 010));
+      //WaveformSegment.Points.Add(new Point(018, 060));
+      //WaveformSegment.Points.Add(new Point(023, 030));
+      //WaveformSegment.Points.Add(new Point(035, 040));
+      //WaveformSegment.Points.Add(new Point(040, 000));
+      //WaveformSegment.Points.Add(new Point(043, 060));
+      //WaveformSegment.Points.Add(new Point(048, 030));
+      //WaveformSegment.Points.Add(new Point(100, 030));
+
+      for(int i=0; i < _waveformData.Length; i++)
+      {
+        var p = new Point
+        {
+          X = i * WaveformLayout.Width / _waveformData.Length,
+          Y = _waveformData[i] * WaveformLayout.Height / 256 + WaveformLayout.Height / 2
+        };
+        WaveformSegment.Points.Add(p);
+      }
       WaveformLayout.Children.Add(WaveformPath);
     }
 

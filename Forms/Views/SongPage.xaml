@@ -177,6 +177,7 @@
                MaxLines="{OnIdiom Phone=6, Default=8}"
                VerticalTextAlignment="Start"
                Style="{StaticResource Key=ProgressStyle}"
+               IsVisible="False"
                />
 
         <StackLayout
