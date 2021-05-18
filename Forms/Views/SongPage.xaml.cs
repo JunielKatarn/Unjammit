@@ -26,12 +26,14 @@ namespace Jammit.Forms.Views
 
       instance.InitializeComponent();
 
-      //TODO: Should be set in binding.
-      instance.ScorePicker.SelectedIndex = 0;
+      //TODO: Maybe set in binding.
+      instance.ScoreSelector.Scores = instance.Media.Scores;
 
       //TODO: Use themes!
       NormalButtonBackgroundColor = instance.PlayButton.BackgroundColor;
       NormalButtonTextColor = instance.PlayButton.TextColor;
+
+      instance.CloseButton.Text = "⬅️ " + instance.CloseButton.Text;
 
       return instance;
     }
@@ -45,6 +47,12 @@ namespace Jammit.Forms.Views
 
     private int _beatIndex;
     int _sectionIndex;
+
+    /// <summary>
+    /// Platforms can vary their Player/Tracker uninitializing order.
+    /// Tracking this will ensure the correct non-zero value is persisted when disappearing/closing.
+    /// </summary>
+    TimeSpan _lastPosition = TimeSpan.MinValue;
 
     #endregion private fields
 
@@ -66,10 +74,10 @@ namespace Jammit.Forms.Views
       if (Device.Android == Device.RuntimePlatform && TargetIdiom.Phone == Device.Idiom)
         MessagingCenter.Send(this, "PreventPortrait");
 
-      if (null == ScorePicker.SelectedItem)
+      if (null == ScoreSelector.SelectedScore)
         return;
 
-      var track = (ScorePicker.SelectedItem as ScoreInfo).Track;
+      var track = ScoreSelector.SelectedScore.Track;
       var h = track.ScoreSystemHeight * .775;
       CursorFrame.HeightRequest = h;
       CursorBar.HeightRequest = h;
@@ -98,23 +106,22 @@ namespace Jammit.Forms.Views
       base.OnSizeAllocated(width, height);
 
       // Page Width shoud be greater or equal. Else, there is children overflow.
-      if (Width < MixerLayout.Width + ProgressLayout.Width)
-        AlbumImage.IsVisible = false;
+      AlbumImageLayout.IsVisible = Width >= MixerLayout.Width + ProgressLayout.Width;
 
       // Adjust ScoreView, if needed.
       ScoreLayout_SizeChanged(null, null);
 
-      var systemHeight = (ScorePicker.SelectedItem as ScoreInfo).Track.ScoreSystemHeight;
+      var systemHeight = ScoreSelector.SelectedScore.Track.ScoreSystemHeight;
       ScoreContainer.HeightRequest = (double)Resources["ScoreHeight"] + systemHeight;
       ScoreImagePadLayout.HeightRequest = systemHeight;
     }
 
     protected override void OnDisappearing()
     {
-      base.OnDisappearing();
-
       if (Device.Android == Device.RuntimePlatform && TargetIdiom.Phone == Device.Idiom)
         MessagingCenter.Send(this, "AllowLandScapePortrait");
+
+      base.OnDisappearing();
     }
 
     #endregion Page overrides
@@ -220,7 +227,7 @@ namespace Jammit.Forms.Views
       FindBeat(position.TotalSeconds, 0, Media.Beats.Count);
       FindSection(_beatIndex, 0, Media.Sections.Count);
 #endif
-      var track = (ScorePicker.SelectedItem as ScoreInfo).Track;
+      var track = ScoreSelector.SelectedScore.Track;
       var nodes = Media.ScoreNodes[track].Nodes;
       CursorBar.TranslationX = nodes[_beatIndex].X;
 
@@ -252,8 +259,7 @@ namespace Jammit.Forms.Views
       //  $"HLO.H {HeaderLayout.Height}\n" +
       //  $"SVW.H {ScoreView.Height}\n" +
       //  $"HCB.H {HideControlsButton.Height}\n" +
-      //  $"CLO.H {ControlsLayout.Height}\n" +
-      //  $"FLO.H {FooterLayout.Height}";
+      //  $"CLO.H {ControlsLayout.Height}\n";
 #else
       //TimelineImage.Text = $"{Media.Sections[_sectionIndex].Name}\n\n\n\n\n";
       TimelineImage.Text = $"{Media.Sections[_sectionIndex].Name}";
@@ -262,7 +268,7 @@ namespace Jammit.Forms.Views
 
     void SetScorePage(uint index)
     {
-      var score = ScorePicker.SelectedItem as ScoreInfo;
+      var score = ScoreSelector.SelectedScore;
       if (index < 0 || index >= score.PageCount)
         return;
 
@@ -287,9 +293,22 @@ namespace Jammit.Forms.Views
 
     private void Player_PositionChanged(object sender, EventArgs e)
     {
-      var newPosition = (sender as Audio.IJcfPlayer).Position;
-      if (newPosition.TotalSeconds != PositionSlider.Value)
-        PositionSlider.Value = newPosition.TotalSeconds;
+      Device.BeginInvokeOnMainThread(() =>
+      {
+        var newPosition = (sender as Audio.IJcfPlayer).Position;
+        if (newPosition.TotalSeconds != PositionSlider.Value)
+        {
+          if (newPosition == TimeSpan.Zero && _lastPosition != TimeSpan.Zero)
+          {
+            _lastPosition = TimeSpan.FromSeconds(PositionSlider.Value);
+          }
+          else
+          {
+            _lastPosition = TimeSpan.MinValue;
+          }
+          PositionSlider.Value = newPosition.TotalSeconds;
+        }
+      });
     }
 
     private void PlayButton_Clicked(object sender, EventArgs e)
@@ -323,6 +342,9 @@ namespace Jammit.Forms.Views
     {
       Player.Stop();
 
+      // If Stop explicitly requested, ensure position is reset.
+      _lastPosition = TimeSpan.Zero;
+
       PlayButton.BackgroundColor = NormalButtonBackgroundColor;
       PlayButton.TextColor = NormalButtonTextColor;
     }
@@ -339,11 +361,6 @@ namespace Jammit.Forms.Views
       // Update the player position only on manual ( > 1 ) slider changes.
       if (Math.Abs(e.NewValue - Player.Position.TotalSeconds) > 1)
         Player.Position = TimeSpan.FromSeconds(e.NewValue);
-    }
-
-    private void ScorePicker_SelectedIndexChanged(object sender, EventArgs e)
-    {
-      SetScorePage(PageIndex);
     }
 
     private void BackButton_Clicked(object sender, EventArgs e)
@@ -385,13 +402,13 @@ namespace Jammit.Forms.Views
     private void HideControlsButton_Clicked(object sender, EventArgs e)
     {
       ControlsLayout.IsVisible = !ControlsLayout.IsVisible;
-      HideControlsButton.Text = ControlsLayout.IsVisible? "▼" : "▲";
+      HideControlsButton.Text = ControlsLayout.IsVisible? "⬇️" : "⬆️";
     }
 
     private void ScoreLayout_SizeChanged(object sender, EventArgs e)
     {
       // Hide score layout if it won't fit the screen.
-      var systemHeight = (ScorePicker.SelectedItem as ScoreInfo).Track.ScoreSystemHeight;
+      var systemHeight = ScoreSelector.SelectedScore.Track.ScoreSystemHeight;
       if (ScoreView.IsVisible && ScoreLayout.Height > 0 && ScoreLayout.Height < systemHeight)
       {
         ScoreView.IsVisible = false;
@@ -402,6 +419,60 @@ namespace Jammit.Forms.Views
         ScoreHiddenLabel.IsVisible = false;
         ScoreView.IsVisible = true;
       }
+    }
+
+    private void ContentPage_Appearing(object sender, EventArgs e)
+    {
+      //TODO: Remove
+      //ScorePicker.SelectedIndex = (int)Settings.Get(Settings.SelectedScoreKey(Song), 0);
+      ControlsLayout.IsVisible = Settings.Get(Settings.MixerCollapsedKey(Song), true);
+      PositionSlider.Value = Settings.Get(Settings.PositionKey(Song), TimeSpan.Zero).TotalSeconds;
+    }
+
+    private void ContentPage_Disappearing(object sender, EventArgs e)
+    {
+      //TODO: Remove
+      //Settings.Set(Settings.SelectedScoreKey(Song), (uint)ScorePicker.SelectedIndex);
+      Settings.Set(Settings.MixerCollapsedKey(Song), ControlsLayout.IsVisible);
+
+      if (_lastPosition > TimeSpan.Zero)
+        Settings.Set(Settings.PositionKey(Song), _lastPosition);
+      else
+        Settings.Set(Settings.PositionKey(Song), TimeSpan.FromSeconds(PositionSlider.Value));
+      //TODO: TrackMuted
+    }
+
+    //TODO: Translate
+    async void AlbumImage_Clicked(object sender, EventArgs e)
+    {
+      if (string.IsNullOrEmpty(Song.Tempo))
+        App.MediaLoader.LoadFullSongInfo(Song, Media.Path);
+
+      var info = $"Song: {Song.Title}\n" +
+        $"Performed by: {Song.Artist}\n" +
+        $"Album: {Song.Album}\n";
+
+      if (Song.Tunings != null && Song.Tunings.Count > 0)
+      {
+        info += "Tuning:\n";
+        foreach (var tuning in Song.Tunings)
+        {
+          info += $"{tuning}\n";
+        }
+      }
+
+      info +=
+        $"Tempo: {Song.Tempo} BPM\n" +
+        $"Written by: {Song.WrittenBy}\n" +
+        $"Published by: {Song.PublishedBy}\n" +
+        $"Used courtesy of: {Song.CourtesyOf}\n";
+
+      await DisplayAlert("Song Info", info, "OK");
+    }
+
+    void ScoreSelector_SelectedScoreChanged(object sender, EventArgs e)
+    {
+      SetScorePage(PageIndex);
     }
   }
 }

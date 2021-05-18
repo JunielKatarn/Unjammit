@@ -50,7 +50,6 @@ namespace Jammit.Forms.Client
           {
             result.Add(new SongInfo()
             {
-              Id = Guid.Parse(song["id"].ToString()),
               Sku = song["sku"].ToString(),
               Artist = song["artist"].ToString(),
               Album = song["album"].ToString(),
@@ -91,7 +90,7 @@ namespace Jammit.Forms.Client
       // https://stackoverflow.com/questions/36698677
       using (var client = new HttpClient(new HttpClientHandler(), false))
       {
-        client.BaseAddress = new Uri($"{Settings.ServiceUri}/download?id={song.Id.ToString().ToUpper()}");
+        client.BaseAddress = new Uri($"{Settings.ServiceUri}/download?id={song.Sku}");
         client.DefaultRequestHeaders.Clear();
 
         var response = await client.GetAsync(client.BaseAddress.AbsoluteUri);
@@ -133,7 +132,7 @@ namespace Jammit.Forms.Client
           //TODO
         };
 
-        var uri = new Uri($"{Settings.ServiceUri}/download?id={song.Id.ToString().ToUpper()}");
+        var uri = new Uri($"{Settings.ServiceUri}/download?id={song.Sku}");
         await client.DownloadFileTaskAsync(uri, path);
       }
     }
@@ -148,7 +147,9 @@ namespace Jammit.Forms.Client
 
         var json = new JObject();
         // See https://montemagno.com/unique-device-id-for-mobile-apps/
-        json.Add("id", Plugin.DeviceInfo.CrossDeviceInfo.Current.Id);
+        // Disabled. Full dependency was required only for the line below.
+        //json.Add("id", Plugin.DeviceInfo.CrossDeviceInfo.Current.Id);
+
         json.Add("platform", Xamarin.Forms.Device.RuntimePlatform);
         var content = new StringContent(json.ToString(), Encoding.UTF8, "application/json");
 

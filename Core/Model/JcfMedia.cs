@@ -23,7 +23,7 @@ namespace Jammit.Model
 
     public FileTrackInfo BackingTrack { get; set; }
 
-    public TrackInfo ClickTrack { get; set; }
+    public PlayableTrackInfo ClickTrack { get; set; }
 
     public TimeSpan Length { get; set; }
 
@@ -44,7 +44,7 @@ namespace Jammit.Model
 
     public int CompareTo(JcfMedia other)
     {
-      return Song.Id.CompareTo(other.Song.Id);
+      return Song.Sku.CompareTo(other.Song.Sku);
     }
 
     #endregion

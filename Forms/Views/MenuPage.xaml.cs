@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
+using Xamarin.Essentials;
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
 
@@ -17,49 +15,65 @@ namespace Jammit.Forms.Views
     public MenuPage()
     {
       InitializeComponent();
+
+      //TODO: Bind (fails on Gtk, prints "Binding" on other platforms.
+      if (Device.GTK == Device.RuntimePlatform)
+        Title = "Menu";
+      else
+        Title = Localized.MenuPage_Title;
     }
-
-    #region Page overrides
-
-    protected override void OnAppearing()
-    {
-    }
-
-    #endregion  Page overrides
 
     private async void OpenButton_Clicked(object sender, EventArgs e)
     {
-      Plugin.FilePicker.Abstractions.FileData picked = null;
+      FileResult picked = null;
       try
       {
-        picked = await Plugin.FilePicker.CrossFilePicker.Current.PickFile(App.AllowedFileTypes);
+        picked = await FilePicker.PickAsync(new PickOptions
+        {
+          PickerTitle = "Select JCF archive",
+          FileTypes = new FilePickerFileType(new Dictionary<DevicePlatform, IEnumerable<string>>
+          {
+            { DevicePlatform.Android, new[] { "application/zip" } },
+            { DevicePlatform.iOS, new[] { "com.pkware.zip-archive" } },
+            { DevicePlatform.macOS, new[] { "com.pkware.zip-archive", "zip" } },
+            { DevicePlatform.UWP, new[] { ".zip" } },
+            { DevicePlatform.Unknown, new[] { ".zip" } }
+          })
+        });
         if (picked == null)
           return;
 
-        var song = App.Library.AddSong(picked.GetStream());
+        var song = App.Library.AddSong(await picked.OpenReadAsync());
 
         await DisplayAlert(Localized.MenuPage_Import, song.ToString(), "OK");
       }
       catch (Exception)
       {
-        await DisplayAlert(Localized.MenuPage_ImportCatchTitle, string.Format(Localized.MenuPage_ImportCatch, picked.FilePath), "OK");
+        var path = picked == null ? string.Empty : picked.FullPath;
+        await DisplayAlert(Localized.MenuPage_ImportCatchTitle, string.Format(Localized.MenuPage_ImportCatch, path), "OK");
       }
     }
 
     private async void AboutButton_Clicked(object sender, EventArgs e)
     {
-      var mdi = "";
-      var version = "";
-      if (Device.macOS != Device.RuntimePlatform && Device.GTK != Device.RuntimePlatform)
+      string mdi;
+      string version;
+      if (Device.GTK != Device.RuntimePlatform)
       {
-        mdi = Xamarin.Essentials.DeviceDisplay.MainDisplayInfo.ToString();
-        version = Xamarin.Essentials.VersionTracking.CurrentVersion;
+        //TODO: Log bug against Xamarin.Essentials (iOS 9.3.x)
+        if (Device.RuntimePlatform == Device.iOS && DeviceInfo.Version.Major < 10)
+          mdi = "Unknown";
+        else
+          mdi = DeviceDisplay.MainDisplayInfo.ToString();
+
+        version = VersionTracking.CurrentVersion;
       }
       else
       {
-        mdi = "Desktop";
-        version = "1.0";
+        mdi = "Unknown";
+        version = "Unknown";
       }
+
       await DisplayAlert("Info", $"Unjammit! Version [{version}]\nDisplayInfo: [{mdi}]", "OK");
     }
   }

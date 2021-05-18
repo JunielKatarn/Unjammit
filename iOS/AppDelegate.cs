@@ -22,22 +22,39 @@ namespace Jammit.iOS
     //
     public override bool FinishedLaunching(UIApplication app, NSDictionary options)
     {
-      //TODO: Remove once RadioButton is promoted from Experimental.
-      global::Xamarin.Forms.Forms.SetFlags("RadioButton_Experimental");
-
       global::Xamarin.Forms.Forms.Init();
 
       // Audio options
       NSError error = AVFoundation.AVAudioSession.SharedInstance().SetCategory(AVFoundation.AVAudioSessionCategory.Playback);
       Jammit.Forms.App.AllowedFileTypes = new string[] { "com.pkware.zip-archive" };
       Jammit.Forms.App.DataDirectory = Xamarin.Essentials.FileSystem.AppDataDirectory;
+
+#if false
+      Jammit.Forms.App.PlayerFactory =
+        async (media) => await System.Threading.Tasks.Task.Run(() => new Audio.AppleJcfPlayer(media));
+#else
       Jammit.Forms.App.PlayerFactory = async (media) => await System.Threading.Tasks.Task.Run(() =>
       {
-        return new Audio.AppleJcfPlayer(media, (track, stream) =>
+        var player = new Audio.NAudioJcfPlayer(
+          media,
+          new Audio.AVAudioWavePlayer() { DesiredLatency = 60, NumberOfBuffers = 2 },
+          System.IO.Path.Combine(Xamarin.Essentials.FileSystem.AppDataDirectory, "Tracks"),
+          Forms.Resources.Assets.Stick);
+
+        player.TimerAction = () =>
         {
-          return new Audio.IOSAVAudioPlayer(track, stream);
-        });
+          Xamarin.Forms.Device.StartTimer(new System.TimeSpan(0, 0, 1), () =>
+          {
+            Xamarin.Forms.Device.BeginInvokeOnMainThread(() => player.NotifyPositionChanged());
+
+            return player.State == Audio.PlaybackStatus.Playing;
+          });
+        };
+
+        return player;
       });
+#endif
+
       Jammit.Forms.App.MediaLoader = new Model.FileSystemJcfLoader(Xamarin.Essentials.FileSystem.AppDataDirectory);
 
       LoadApplication(new Jammit.Forms.App());
