@@ -85,7 +85,7 @@ namespace Jammit.Forms.Views
       if (AlbumImage.IsVisible)
         AlbumImage.Source = ImageSource.FromStream(() => { return App.MediaLoader.LoadAlbumCover(Media); });
 
-      ////0,0 10,30, 15,0 18,60 23,30 35,30 40,0 43,60 48,30 100,30
+      //0,0 10,30, 15,0 18,60 23,30 35,30 40,0 43,60 48,30 100,30
 
       WaveformLayout.Children.Remove(WaveformPath);
       WaveformSegment.Points.Add(new Point(000, 000));
