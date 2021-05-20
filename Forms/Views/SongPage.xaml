@@ -180,41 +180,49 @@
                IsVisible="False"
                />
 
-        <StackLayout
-          x:Name="WaveformLayout"
-          Background="Black"
-          Padding="0"
-          Margin="0"
+        <ScrollView
+          Orientation="Neither"
           HorizontalOptions="FillAndExpand"
           VerticalOptions="FillAndExpand"
-          SizeChanged="WaveformLayout_SizeChanged"
+          Padding="0"
+          Margin="0"
           >
-          <Path x:Name="WaveformPath"
+          <StackLayout
+            x:Name="WaveformLayout"
+            Background="Black"
+            Padding="0"
+            Margin="0"
+            HorizontalOptions="FillAndExpand"
+            VerticalOptions="FillAndExpand"
+            SizeChanged="WaveformLayout_SizeChanged"
+            >
+            <Path x:Name="WaveformPath"
                 HorizontalOptions="Fill"
                 VerticalOptions="Fill"
                 Stroke="Green"
                 StrokeThickness="1"
                 >
-            <Path.RenderTransform>
-              <TranslateTransform X="0" Y="0" />
-            </Path.RenderTransform>
-            <Path.Data>
-              <PathGeometry>
-                <PathGeometry.Figures>
-                  <PathFigureCollection>
-                    <PathFigure StartPoint="0,0">
-                      <PathFigure.Segments>
-                        <PathSegmentCollection>
-                          <PolyLineSegment x:Name="WaveformSegment" Points="0,0" />
-                        </PathSegmentCollection>
-                      </PathFigure.Segments>
-                    </PathFigure>
-                  </PathFigureCollection>
-                </PathGeometry.Figures>
-              </PathGeometry>
-            </Path.Data>
-          </Path>
-        </StackLayout>
+              <Path.RenderTransform>
+                <TranslateTransform X="0" Y="0" />
+              </Path.RenderTransform>
+              <Path.Data>
+                <PathGeometry>
+                  <PathGeometry.Figures>
+                    <PathFigureCollection>
+                      <PathFigure StartPoint="0,0">
+                        <PathFigure.Segments>
+                          <PathSegmentCollection>
+                            <PolyLineSegment x:Name="WaveformSegment" Points="0,0" />
+                          </PathSegmentCollection>
+                        </PathFigure.Segments>
+                      </PathFigure>
+                    </PathFigureCollection>
+                  </PathGeometry.Figures>
+                </PathGeometry>
+              </Path.Data>
+            </Path>
+          </StackLayout>
+        </ScrollView>
 
         <StackLayout Orientation="Horizontal" HorizontalOptions="CenterAndExpand" VerticalOptions="End">
           <Button x:Name="RepeatButton"  Text="🔁" Style="{StaticResource Key=PlaybackButtonStyle}" IsEnabled="True" Clicked="RepeatButton_Clicked" />
