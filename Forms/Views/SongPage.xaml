@@ -181,7 +181,8 @@
                />
 
         <ScrollView
-          Orientation="Neither"
+          x:Name="WaveformScrollView"
+          Orientation="Horizontal"
           HorizontalOptions="FillAndExpand"
           VerticalOptions="FillAndExpand"
           Padding="0"
@@ -192,9 +193,8 @@
             Background="Black"
             Padding="0"
             Margin="0"
-            HorizontalOptions="FillAndExpand"
-            VerticalOptions="FillAndExpand"
-            SizeChanged="WaveformLayout_SizeChanged"
+            HorizontalOptions="Fill"
+            VerticalOptions="Fill"
             >
             <Path x:Name="WaveformPath"
                 HorizontalOptions="Fill"
@@ -202,17 +202,14 @@
                 Stroke="Green"
                 StrokeThickness="1"
                 >
-              <Path.RenderTransform>
-                <TranslateTransform X="0" Y="0" />
-              </Path.RenderTransform>
               <Path.Data>
                 <PathGeometry>
                   <PathGeometry.Figures>
                     <PathFigureCollection>
-                      <PathFigure StartPoint="0,0">
+                      <PathFigure>
                         <PathFigure.Segments>
                           <PathSegmentCollection>
-                            <PolyLineSegment x:Name="WaveformSegment" Points="0,0" />
+                            <PolyLineSegment x:Name="WaveformSegment" />
                           </PathSegmentCollection>
                         </PathFigure.Segments>
                       </PathFigure>

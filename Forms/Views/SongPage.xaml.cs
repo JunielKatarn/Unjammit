@@ -36,6 +36,7 @@ namespace Jammit.Forms.Views
       instance.CloseButton.Text = "⬅️ " + instance.CloseButton.Text;
 
       instance._waveformData = App.MediaLoader.LoadWaveform(instance.Media);
+      instance.WaveformLayout.WidthRequest = 724 / 2 + instance._waveformData.Length;
 
       return instance;
     }
@@ -102,6 +103,9 @@ namespace Jammit.Forms.Views
       var systemHeight = ScoreSelector.SelectedScore.Track.ScoreSystemHeight;
       ScoreContainer.HeightRequest = (double)Resources["ScoreHeight"] + systemHeight;
       ScoreImagePadLayout.HeightRequest = systemHeight;
+
+      // Must have at least one point when rendered, or some platforms may crash.
+      WaveformSegment.Points.Add(new Point(0, WaveformLayout.Height / 2));
     }
 
     protected override void OnDisappearing()
@@ -275,6 +279,40 @@ namespace Jammit.Forms.Views
           return App.MediaLoader.LoadNotation(Media, score, index + 1);
         });
       }
+    }
+
+    void RenderWave()
+    {
+      //TODO: Use WaveformScrollView
+      if (WaveformLayout.Width <= 0 || WaveformLayout.Height <= 0)
+        return;
+
+      int midX = (int)WaveformLayout.Width / 2;
+      // Ay/256 + y/2 = y(A/256 + 1/2) = y(A/256 + 128/256) = y(A+128)/256 = (y/256)(A+128)
+      var scaleY = WaveformLayout.Height / 256;
+      int sample = (int)(PositionSlider.Value / PositionSlider.Maximum * _waveformData.Length);
+
+      int x = midX;
+      var points = new PointCollection
+      {
+        new Point(0, WaveformLayout.Height / 2),
+        new Point(midX, WaveformLayout.Height / 2)
+      };
+      for (int i = Math.Max(0, sample - midX); i < sample + WaveformLayout.Width; i++)
+      {
+        points.Add(new Point
+        {
+          X = x++,
+          Y = scaleY * (_waveformData[i] + 128)
+        });
+      }
+      WaveformSegment.Points.Clear();
+
+      // Begin render
+      WaveformLayout.Children.Remove(WaveformPath);
+      WaveformSegment.Points = points;
+      WaveformLayout.Children.Add(WaveformPath);
+      // End render
     }
 
     //#region Handlers
@@ -463,33 +501,37 @@ namespace Jammit.Forms.Views
       SetScorePage(PageIndex);
     }
 
-    private async void WaveformLayout_SizeChanged(object sender, EventArgs e)
+    //TODO: Remove. For experimentation only.
+    private void RepeatButton_Clicked(object sender, EventArgs e)
     {
       if (WaveformLayout.Width <= 0 || WaveformLayout.Height <= 0)
         return;
 
-      await Device.InvokeOnMainThreadAsync(() =>
-      {
-        WaveformLayout.Children.Remove(WaveformPath);
-        //TODO: Render only segment; increase index by 1
-        for (int i = 0; i < _waveformData.Length; i += _waveformData.Length / 500 + 1)
-        //for (int i = 0; i < _waveformData.Length; i++)
-        {
-          var p = new Point
-          {
-            X = i * WaveformLayout.Width / _waveformData.Length,
-            Y = _waveformData[i] * WaveformLayout.Height / 256 + WaveformLayout.Height / 2
-          };
-          WaveformSegment.Points.Add(p);
-        }
-        WaveformLayout.Children.Add(WaveformPath);
-      });
-    }
+      int midX = (int)WaveformScrollView.Width / 2;
+      // Ay/256 + y/2 = y(A/256 + 1/2) = y(A/256 + 128/256) = y(A+128)/256 = (y/256)(A+128)
+      var scaleY = WaveformLayout.Height / 256;
+      //int sample = (int)(PositionSlider.Value / PositionSlider.Maximum * _waveformData.Length);
 
-    //TODO: Remove. For experimentation only.
-    private void RepeatButton_Clicked(object sender, EventArgs e)
-    {
-      (WaveformPath.RenderTransform as TranslateTransform).X -= 20;
+      int x = midX;
+      var points = new PointCollection
+      {
+        new Point(0, WaveformLayout.Height / 2)
+      };
+      foreach (var sample in _waveformData)
+      {
+        points.Add(new Point
+        {
+          X = x++,
+          Y = scaleY * (sample + 128)
+        });
+      }
+      WaveformSegment.Points.Clear();
+
+      // Begin render
+      WaveformLayout.Children.Remove(WaveformPath);
+      WaveformSegment.Points = points;
+      WaveformLayout.Children.Add(WaveformPath);
+      // End render
     }
   }
 }
