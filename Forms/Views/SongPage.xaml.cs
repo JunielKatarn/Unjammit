@@ -36,7 +36,9 @@ namespace Jammit.Forms.Views
       instance.CloseButton.Text = "⬅️ " + instance.CloseButton.Text;
 
       instance._waveformData = App.MediaLoader.LoadWaveform(instance.Media);
-      instance.WaveformLayout.WidthRequest = 724 / 2 + instance._waveformData.Length;
+
+      //TODO: remove?
+      instance.WaveformLayout.WidthRequest = 724 * 2;
 
       return instance;
     }
@@ -51,6 +53,12 @@ namespace Jammit.Forms.Views
     private int _beatIndex;
     private int _sectionIndex;
     private sbyte[] _waveformData;
+    private int _waveformMidX;
+    private double _waveformScaleY; // aY/256 + Y/2 = Y(a/256 + 1/2) = Y(a/256 + 128/256) = Y(a+128)/256 = (Y/256)(a+128)
+    private double _waveSampleFactor;
+    private int _waveformRenderIndex;
+    private int _waveformFirstIndex;
+    private int _waveformLastIndex;
 
     /// <summary>
     /// Platforms can vary their Player/Tracker uninitializing order.
@@ -105,7 +113,7 @@ namespace Jammit.Forms.Views
       ScoreImagePadLayout.HeightRequest = systemHeight;
 
       // Must have at least one point when rendered, or some platforms may crash.
-      WaveformSegment.Points.Add(new Point(0, WaveformLayout.Height / 2));
+      //WaveformSegment.Points.Add(new Point(0, WaveformLayout.Height / 2));//Useless on iOS?
     }
 
     protected override void OnDisappearing()
@@ -281,38 +289,52 @@ namespace Jammit.Forms.Views
       }
     }
 
+    /// <summary>
+    /// Renders waveform at current position.
+    /// </summary>
     void RenderWave()
     {
       //TODO: Use WaveformScrollView
       if (WaveformLayout.Width <= 0 || WaveformLayout.Height <= 0)
         return;
 
-      int midX = (int)WaveformLayout.Width / 2;
-      // Ay/256 + y/2 = y(A/256 + 1/2) = y(A/256 + 128/256) = y(A+128)/256 = (y/256)(A+128)
-      var scaleY = WaveformLayout.Height / 256;
-      int sample = (int)(PositionSlider.Value / PositionSlider.Maximum * _waveformData.Length);
+      int oldIndex = _waveformRenderIndex;
+      _waveformRenderIndex = (int)(PositionSlider.Value * _waveSampleFactor);
 
-      int x = midX;
-      var points = new PointCollection
+      // If necessary samples have been rendered, adjust position and return.
+      if (_waveformFirstIndex >= Math.Max(0, _waveformRenderIndex - 724) &&
+        _waveformLastIndex <= Math.Min(_waveformData.Length, _waveformRenderIndex + 724))
       {
-        new Point(0, WaveformLayout.Height / 2),
-        new Point(midX, WaveformLayout.Height / 2)
-      };
-      for (int i = Math.Max(0, sample - midX); i < sample + WaveformLayout.Width; i++)
-      {
-        points.Add(new Point
-        {
-          X = x++,
-          Y = scaleY * (_waveformData[i] + 128)
-        });
+        var delta = oldIndex - _waveformRenderIndex;
+        _waveformFirstIndex += delta;
+        _waveformLastIndex += delta;
+        WaveformPath.TranslationX += delta;
       }
-      WaveformSegment.Points.Clear();
+      else
+      {
+        var points = new PointCollection();
+        var start = Math.Max(0, _waveformRenderIndex - 724);
+        var end   = Math.Min(_waveformData.Length, _waveformRenderIndex + 724);
 
-      // Begin render
-      WaveformLayout.Children.Remove(WaveformPath);
-      WaveformSegment.Points = points;
-      WaveformLayout.Children.Add(WaveformPath);
-      // End render
+        //Redundant?
+        _waveformFirstIndex = start;
+        _waveformLastIndex = end;
+        for(int i = start; i < end; i++)
+        {
+          points.Add(new Point
+          {
+            X = i + _waveformMidX,
+            Y = _waveformScaleY * (_waveformData[i] + 128)
+          });
+        }
+        WaveformSegment.Points.Clear();
+
+        // Begin render
+        WaveformLayout.Children.Remove(WaveformPath);
+        WaveformSegment.Points = points;
+        WaveformLayout.Children.Add(WaveformPath);
+        // End render
+      }
     }
 
     //#region Handlers
@@ -382,11 +404,13 @@ namespace Jammit.Forms.Views
       Navigation.PopModalAsync();
     }
 
-    void PositionSlider_ValueChanged(object sender, Xamarin.Forms.ValueChangedEventArgs e)
+    void PositionSlider_ValueChanged(object sender, ValueChangedEventArgs e)
     {
-      // Update the player position only on manual ( > 1 ) slider changes.
+      // Update the player position only on manual ( > 1s ) slider changes.
       if (Math.Abs(e.NewValue - Player.Position.TotalSeconds) > 1)
         Player.Position = TimeSpan.FromSeconds(e.NewValue);
+
+      RenderWave();
     }
 
     private void BackButton_Clicked(object sender, EventArgs e)
@@ -508,7 +532,7 @@ namespace Jammit.Forms.Views
         return;
 
       int midX = (int)WaveformScrollView.Width / 2;
-      // Ay/256 + y/2 = y(A/256 + 1/2) = y(A/256 + 128/256) = y(A+128)/256 = (y/256)(A+128)
+      // aY/256 + Y/2 = Y(a/256 + 1/2) = Y(a/256 + 128/256) = Y(a+128)/256 = (Y/256)(a+128)
       var scaleY = WaveformLayout.Height / 256;
       //int sample = (int)(PositionSlider.Value / PositionSlider.Maximum * _waveformData.Length);
 
@@ -532,6 +556,16 @@ namespace Jammit.Forms.Views
       WaveformSegment.Points = points;
       WaveformLayout.Children.Add(WaveformPath);
       // End render
+    }
+
+    void WaveformScrollView_SizeChanged(object sender, EventArgs e)
+    {
+      if (WaveformScrollView.Width < 1 || WaveformScrollView.Height < 1)
+        return;
+
+      _waveformMidX = (int)WaveformScrollView.Width / 2;
+      _waveformScaleY = WaveformScrollView.Height / 256;
+      _waveSampleFactor = _waveformData.Length / PositionSlider.Maximum;
     }
   }
 }

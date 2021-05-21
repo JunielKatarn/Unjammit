@@ -180,6 +180,7 @@
                IsVisible="False"
                />
 
+        <!-- TODO: Orientation = Neither -->
         <ScrollView
           x:Name="WaveformScrollView"
           Orientation="Horizontal"
@@ -187,6 +188,7 @@
           VerticalOptions="FillAndExpand"
           Padding="0"
           Margin="0"
+          SizeChanged="WaveformScrollView_SizeChanged"
           >
           <StackLayout
             x:Name="WaveformLayout"
@@ -209,7 +211,7 @@
                       <PathFigure>
                         <PathFigure.Segments>
                           <PathSegmentCollection>
-                            <PolyLineSegment x:Name="WaveformSegment" />
+                            <PolyLineSegment x:Name="WaveformSegment" Points="0,0" />
                           </PathSegmentCollection>
                         </PathFigure.Segments>
                       </PathFigure>
