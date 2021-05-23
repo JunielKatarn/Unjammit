@@ -15,11 +15,13 @@ namespace Jammit.Forms.Renderers
       {
         if ("ScrollToRequested" == field.Name)
         {
+          // No delegate => inhibit parent scrollers, if any
+          if (elem.Delegate == null)
+            return;
+
           var evt = field.GetValue(elem.Delegate);
           var delegateView = (evt as System.EventHandler<ScrollToRequestedEventArgs>).Target as AppKit.NSScrollView;
           delegateView.ScrollWheel(theEvent);
-
-          return;
         }
       }
     }

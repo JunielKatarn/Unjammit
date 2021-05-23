@@ -188,8 +188,12 @@
           VerticalOptions="FillAndExpand"
           Padding="0"
           Margin="0"
+          HorizontalScrollBarVisibility="Never"
+          VerticalScrollBarVisibility="Never"
           SizeChanged="WaveformScrollView_SizeChanged"
           >
+          <local:DisabledScrollView IsEnabled="False">
+
           <StackLayout
             x:Name="WaveformLayout"
             Background="Black"
@@ -221,6 +225,8 @@
               </Path.Data>
             </Path>
           </StackLayout>
+
+          </local:DisabledScrollView>
         </ScrollView>
 
         <StackLayout Orientation="Horizontal" HorizontalOptions="CenterAndExpand" VerticalOptions="End">
