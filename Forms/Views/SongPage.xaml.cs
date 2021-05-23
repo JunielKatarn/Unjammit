@@ -312,19 +312,17 @@ namespace Jammit.Forms.Views
       }
       else
       {
-        var points = new PointCollection();
-        var start = Math.Max(0, _waveformRenderIndex - 724);
-        var end   = Math.Min(_waveformData.Length, _waveformRenderIndex + 724);
+        _waveformFirstIndex = Math.Max(0, _waveformRenderIndex - 724);
+        _waveformLastIndex = Math.Min(_waveformData.Length, _waveformRenderIndex + 724);
 
-        //Redundant?
-        _waveformFirstIndex = start;
-        _waveformLastIndex = end;
-        for(int i = start; i < end; i++)
+        var points = new PointCollection();
+        var renderSize = _waveformLastIndex - _waveformFirstIndex;
+        for(int i=0; i < renderSize; i++)
         {
           points.Add(new Point
           {
             X = i + _waveformMidX,
-            Y = _waveformScaleY * (_waveformData[i] + 128)
+            Y = _waveformScaleY * (_waveformData[i + _waveformFirstIndex] + 128)
           });
         }
         WaveformSegment.Points.Clear();
@@ -528,34 +526,6 @@ namespace Jammit.Forms.Views
     //TODO: Remove. For experimentation only.
     private void RepeatButton_Clicked(object sender, EventArgs e)
     {
-      if (WaveformLayout.Width <= 0 || WaveformLayout.Height <= 0)
-        return;
-
-      int midX = (int)WaveformScrollView.Width / 2;
-      // aY/256 + Y/2 = Y(a/256 + 1/2) = Y(a/256 + 128/256) = Y(a+128)/256 = (Y/256)(a+128)
-      var scaleY = WaveformLayout.Height / 256;
-      //int sample = (int)(PositionSlider.Value / PositionSlider.Maximum * _waveformData.Length);
-
-      int x = midX;
-      var points = new PointCollection
-      {
-        new Point(0, WaveformLayout.Height / 2)
-      };
-      foreach (var sample in _waveformData)
-      {
-        points.Add(new Point
-        {
-          X = x++,
-          Y = scaleY * (sample + 128)
-        });
-      }
-      WaveformSegment.Points.Clear();
-
-      // Begin render
-      WaveformLayout.Children.Remove(WaveformPath);
-      WaveformSegment.Points = points;
-      WaveformLayout.Children.Add(WaveformPath);
-      // End render
     }
 
     void WaveformScrollView_SizeChanged(object sender, EventArgs e)
