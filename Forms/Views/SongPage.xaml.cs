@@ -528,7 +528,7 @@ namespace Jammit.Forms.Views
     {
     }
 
-    void WaveformScrollView_SizeChanged(object sender, EventArgs e)
+    async void WaveformScrollView_SizeChanged(object sender, EventArgs e)
     {
       if (WaveformScrollView.Width < 1 || WaveformScrollView.Height < 1)
         return;
@@ -536,6 +536,8 @@ namespace Jammit.Forms.Views
       _waveformMidX = (int)WaveformScrollView.Width / 2;
       _waveformScaleY = WaveformScrollView.Height / 256;
       _waveSampleFactor = _waveformData.Length / PositionSlider.Maximum;
+
+      await WaveformScrollView.ScrollToAsync(WaveformScrollView.Width / 2, WaveformScrollView.ScrollY, false);
     }
   }
 }
