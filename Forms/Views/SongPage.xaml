@@ -196,12 +196,21 @@
 
           <StackLayout
             x:Name="WaveformLayout"
-            Background="Black"
             Padding="0"
             Margin="0"
             HorizontalOptions="Fill"
             VerticalOptions="Fill"
             >
+            <StackLayout.Background>
+              <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                <GradientStop Color="DarkViolet"
+                              Offset="0.0"/>
+                <GradientStop Color="DarkGoldenrod"
+                              Offset="0.5"/>
+                <GradientStop Color="#003355"
+                              Offset="1.0"/>
+              </LinearGradientBrush>
+            </StackLayout.Background>
             <Path x:Name="WaveformPath"
                 HorizontalOptions="Fill"
                 VerticalOptions="Fill"
