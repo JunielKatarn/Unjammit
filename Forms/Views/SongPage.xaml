@@ -43,7 +43,8 @@
               FontAttributes="Bold"
               BackgroundColor="DimGray"
               Clicked="CloseButton_Clicked" />
-      <Label Text="{Binding Song.Title}" HorizontalOptions="FillAndExpand" />
+      <!-- TODO: Undo - Binding Song.Title -->
+      <Label Text="{Binding Source={x:Reference WaveformScrollView}, Path=ScrollX}" HorizontalOptions="FillAndExpand" />
       <local:ScoreSelector x:Name="ScoreSelector"
                            HorizontalOptions="End"
                            SelectedScoreChanged="ScoreSelector_SelectedScoreChanged" />
@@ -192,7 +193,7 @@
           VerticalScrollBarVisibility="Never"
           SizeChanged="WaveformScrollView_SizeChanged"
           >
-          <local:DisabledScrollView IsEnabled="False">
+          <local:DisabledScrollView IsEnabled="False" Delegate="{x:Null}">
 
           <StackLayout
             x:Name="WaveformLayout"

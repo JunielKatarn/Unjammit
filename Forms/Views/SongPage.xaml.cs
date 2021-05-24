@@ -56,7 +56,7 @@ namespace Jammit.Forms.Views
     private int _waveformMidX;
     private double _waveformScaleY; // aY/256 + Y/2 = Y(a/256 + 1/2) = Y(a/256 + 128/256) = Y(a+128)/256 = (Y/256)(a+128)
     private double _waveSampleFactor;
-    private int _waveformRenderIndex;
+    private int _wavePositionIndex;
     private int _waveformFirstIndex;
     private int _waveformLastIndex;
 
@@ -292,36 +292,61 @@ namespace Jammit.Forms.Views
     /// <summary>
     /// Renders waveform at current position.
     /// </summary>
-    void RenderWave()
+    async Task RenderWave()
     {
       //TODO: Use WaveformScrollView
       if (WaveformLayout.Width <= 0 || WaveformLayout.Height <= 0)
         return;
 
-      int oldIndex = _waveformRenderIndex;
-      _waveformRenderIndex = (int)(PositionSlider.Value * _waveSampleFactor);
+      _wavePositionIndex = (int)(Player.Position.TotalSeconds * _waveSampleFactor);
 
       // If necessary samples have been rendered, adjust position and return.
-      if (_waveformFirstIndex >= Math.Max(0, _waveformRenderIndex - 724) &&
-        _waveformLastIndex <= Math.Min(_waveformData.Length, _waveformRenderIndex + 724))
+      //if (_waveformFirstIndex >= Math.Max(0, _wavePositionIndex - 724) &&
+      //  _waveformLastIndex <= Math.Min(_waveformData.Length, _wavePositionIndex + 724))
+      if (false)
       {
-        var delta = oldIndex - _waveformRenderIndex;
-        _waveformFirstIndex += delta;
-        _waveformLastIndex += delta;
-        WaveformPath.TranslationX += delta;
+        //TODO: just scroll if no re-rendering needed
       }
       else
       {
-        _waveformFirstIndex = Math.Max(0, _waveformRenderIndex - 724);
-        _waveformLastIndex = Math.Min(_waveformData.Length, _waveformRenderIndex + 724);
+        /*
+         * 0: rs = LO.w - SV.w ÷ 2 + 0
+         * 1: rs = LO.w - SV.w ÷ 2 + 1
+         * 2: rs = LO.w - SV.w ÷ 2 + 2
+         * ...
+         * ?: rs = LO.w - SV.w ÷ 2 + min(wri, SV.w÷2)
+         * ...
+         * SV.w÷2+0: rs = LO.w - SV.w÷2 + SV.w÷2
+         * SV.w÷2+1: rs = LO.w - SV.w÷2 + SV.w÷2
+         * SV.w÷2+2: rs = LO.w - SV.w÷2 + SV.w÷2
+         * ...
+         * LO.w-SV.w÷2+0: rs = LO.w - SV.w÷2 + SV.w÷2 - (SV.w÷2 - SV.w÷2 + 0)
+         * LO.w-SV.w÷2+1: rs = LO.w - SV.w÷2 + SV.w÷2 - (SV.w÷2 - SV.w÷2 + 1)
+         * ...
+         * LO.w-2: rs = LO.w - SV.w÷2 + SV.w÷2 - (SV.w÷2 - 2)
+         * LO.w-1: rs = LO.w - SV.w÷2 + SV.w÷2 - (SV.w÷2 - 1)
+         * LO.w-0: rs = LO.w - SV.w÷2 + SV.w÷2 - (SV.w÷2 - 0)
+         * Ω: rs = LO.w - SV.w ÷ 2
+         */
 
+        _waveformFirstIndex = Math.Max(0, _wavePositionIndex - (int)WaveformLayout.Width * _wavePositionIndex / _waveformData.Length);
+        double startX = 0;
+        var renderSize = WaveformLayout.Width;
+        if (_wavePositionIndex < WaveformScrollView.Width / 2)
+        {
+          renderSize -= WaveformScrollView.Width / 2 - _wavePositionIndex;
+          startX += WaveformScrollView.Width / 2 - _wavePositionIndex;
+        }
+        if (_waveformData.Length - _wavePositionIndex < WaveformScrollView.Width / 2)
+        {
+          renderSize -= WaveformScrollView.Width / 2 - (_waveformData.Length - _wavePositionIndex);
+        }
         var points = new PointCollection();
-        var renderSize = _waveformLastIndex - _waveformFirstIndex;
-        for(int i=0; i < renderSize; i++)
+        for (int i = 0; i < renderSize; i++)
         {
           points.Add(new Point
           {
-            X = i + _waveformMidX,
+            X = i + startX,
             Y = _waveformScaleY * (_waveformData[i + _waveformFirstIndex] + 128)
           });
         }
@@ -333,6 +358,10 @@ namespace Jammit.Forms.Views
         WaveformLayout.Children.Add(WaveformPath);
         // End render
       }
+
+      // Scrollable width = WaveformLayout.Width - WaveformScrollView.Width
+      var scrollX = (double)_wavePositionIndex / _waveformData.Length * (WaveformLayout.Width - WaveformScrollView.Width);
+      await WaveformScrollView.ScrollToAsync(scrollX, WaveformScrollView.ScrollY, false);
     }
 
     //#region Handlers
@@ -373,7 +402,11 @@ namespace Jammit.Forms.Views
 
         Device.StartTimer(TimeSpan.FromMilliseconds(30), () =>
         {
-          Device.BeginInvokeOnMainThread(async () => await MoveCursor(Player.Position));
+          Device.BeginInvokeOnMainThread(async () =>
+          {
+            await MoveCursor(Player.Position);
+            await RenderWave();
+          });
 
           return Player.State == Audio.PlaybackStatus.Playing;
         });
@@ -402,13 +435,13 @@ namespace Jammit.Forms.Views
       Navigation.PopModalAsync();
     }
 
-    void PositionSlider_ValueChanged(object sender, ValueChangedEventArgs e)
+    /*async*/ void PositionSlider_ValueChanged(object sender, ValueChangedEventArgs e)
     {
       // Update the player position only on manual ( > 1s ) slider changes.
       if (Math.Abs(e.NewValue - Player.Position.TotalSeconds) > 1)
         Player.Position = TimeSpan.FromSeconds(e.NewValue);
 
-      RenderWave();
+      //await RenderWave();
     }
 
     private void BackButton_Clicked(object sender, EventArgs e)
@@ -528,16 +561,14 @@ namespace Jammit.Forms.Views
     {
     }
 
-    async void WaveformScrollView_SizeChanged(object sender, EventArgs e)
+    void WaveformScrollView_SizeChanged(object sender, EventArgs e)
     {
       if (WaveformScrollView.Width < 1 || WaveformScrollView.Height < 1)
         return;
 
       _waveformMidX = (int)WaveformScrollView.Width / 2;
       _waveformScaleY = WaveformScrollView.Height / 256;
-      _waveSampleFactor = _waveformData.Length / PositionSlider.Maximum;
-
-      await WaveformScrollView.ScrollToAsync(WaveformScrollView.Width / 2, WaveformScrollView.ScrollY, false);
+      _waveSampleFactor = _waveformData.Length / Player.Length.TotalSeconds;
     }
   }
 }
