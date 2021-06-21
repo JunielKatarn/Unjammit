@@ -14,15 +14,17 @@ namespace Jammit.Audio
   {
     readonly Model.JcfMedia _media;
     readonly AudioStreamDescriptor _descriptor;
-    private short[] _click;
+    readonly short[] _click;
     MyBuffer _myBuffer;
+    Windows.Media.MediaTimelineController _controller;
 
     ConcurrentQueue<IBuffer> _buffersQueue;
     TimeSpan _currentPosition = TimeSpan.Zero;
 
-    public ClickMediaStreamSource(Model.JcfMedia media)
+    public ClickMediaStreamSource(Model.JcfMedia media, Windows.Media.MediaTimelineController controller)
     {
       _media = media;
+      _controller = controller;
 
       _descriptor = new AudioStreamDescriptor(AudioEncodingProperties.CreatePcm(44100, 2, 16));
       MediaStreamSource = new MediaStreamSource(_descriptor);
@@ -38,11 +40,9 @@ namespace Jammit.Audio
 
       _click = new short[Forms.Resources.Assets.Stick.Length / 2];
       System.Buffer.BlockCopy(Forms.Resources.Assets.Stick, 0, _click, 0, Forms.Resources.Assets.Stick.Length);
-      _myBuffer = new MyBuffer(); // 1 minute!
-      
+      _myBuffer = new MyBuffer();
     }
 
-    
     public MediaStreamSource MediaStreamSource { get; }
 
     private Model.Beat FindBeat(double totalSeconds, int start, int end)
@@ -73,9 +73,10 @@ namespace Jammit.Audio
       }
     }
 
+    int lastSecond = 0;
     private IBuffer GetBuffer()
     {
-#if false
+#if true
       IBuffer buffer;
       bool dequeued = _buffersQueue.TryDequeue(out buffer);
       if (!dequeued)
@@ -83,9 +84,29 @@ namespace Jammit.Audio
         // FFmpegInterop::UncompressedSampleProvider::CreateNextSampleBuffer~69 suggests 256, but disrupts playback.
         //buffer = new Buffer(4096);// works-ish
         //buffer = new Buffer(5292);// why?? = 176400 / 33.3333...
-        buffer = new Buffer(176400);// https://www.alsa-project.org/wiki/FramesPeriods#:~:text=e.g.,PCM%20stream%20is%2012%20bytes.
-                                    // channels * sampleSize * analogRate * = 2ch * 2B/smpl * 44100 smpl/s
-                                    // TODO: Infer from audio format
+        //buffer = new Buffer(176400);// https://www.alsa-project.org/wiki/FramesPeriods#:~:text=e.g.,PCM%20stream%20is%2012%20bytes.
+        //                            // channels * sampleSize * analogRate * = 2ch * 2B/smpl * 44100 smpl/s
+        //                            // TODO: Infer from audio format
+
+        // Copy at current song position.
+        byte[] bytes = new byte[176400];
+
+        //_dialTone[2 * i] = (byte)(_click[i % beatIntervalInSamples] & 0XFF);
+        //_dialTone[2 * i + 1] = (byte)((_click[i % beatIntervalInSamples] >> 8) & 0xFF);
+
+        //if (lastSecond != _controller.Position.Seconds)
+        //{
+        //  lastSecond = _controller.Position.Seconds;
+        //  //Array.Copy(_click, bytes, _click.Length);
+        //  for (int i = 0; i < _click.Length; i++)
+        //  {
+        //    bytes[i + 0] = (byte)(_click[i] & 0xFF);
+        //    bytes[i + 1] = (byte)((_click[i] >> 8) & 0xFF); // Clear mask needed?
+        //  }
+        //}
+
+        buffer = Windows.Security.Cryptography.CryptographicBuffer.CreateFromByteArray(bytes);
+
         buffer.Length = buffer.Capacity;
       }
 
@@ -121,10 +142,13 @@ namespace Jammit.Audio
           //                      Pos = _tbf * pts - _sOff(=0)
           //                      Dur = _tbf * dur(=64) // A time period expressed in 100-nanosecond units (ticks) => 1s * 10^-7 => 1 / 1000000
           sample = MediaStreamSample.CreateFromBuffer(buffer, _currentPosition);
+          //sample = MediaStreamSample.CreateFromBuffer(buffer, _controller.Position);
           sample.Processed += OnSampleProcessed;
 
           // 10000000 / 44100 * 64 => 10^-7s
-          sample.Duration = TimeSpan.FromTicks(10000000 / 44100 * 32);// TODO: Infer from audio format
+          // Why 32?
+          //sample.Duration = TimeSpan.FromTicks(10000000 / 44100 * 32);// TODO: Infer from audio format
+          sample.Duration = TimeSpan.FromTicks(10000000 / 44100 * 32 * 2);// TODO: Infer from audio format
 
           _currentPosition += sample.Duration;
         }
@@ -162,7 +186,8 @@ namespace Jammit.Audio
 
     public MyBuffer()
     {
-      _dialTone = new byte[2 * 44100 * 60]; // 1 minute!
+      //_dialTone = new byte[2 * 44100 * 60]; // 1 minute!
+      _dialTone = new byte[2 * 44100 * 10]; // More like 2 * freq * totalBeats!
       FillDialTone();
       SetupBuffer();
     }
