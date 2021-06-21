@@ -150,6 +150,8 @@ namespace Jammit.Audio
           //sample.Duration = TimeSpan.FromTicks(10000000 / 44100 * 32);// TODO: Infer from audio format
           sample.Duration = TimeSpan.FromTicks(10000000 / 44100 * 32 * 2);// TODO: Infer from audio format
 
+          System.Diagnostics.Debug.WriteLine($"SP: {_controller.Position}\nCP: {_currentPosition}");
+
           _currentPosition += sample.Duration;
         }
         else
