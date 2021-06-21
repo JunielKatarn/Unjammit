@@ -14,7 +14,9 @@ namespace Jammit.Audio
   {
     readonly Model.JcfMedia _media;
     readonly AudioStreamDescriptor _descriptor;
-    readonly short[] _click;
+    private short[] _click;
+    MyBuffer _myBuffer;
+
     ConcurrentQueue<IBuffer> _buffersQueue;
     TimeSpan _currentPosition = TimeSpan.Zero;
 
@@ -36,8 +38,11 @@ namespace Jammit.Audio
 
       _click = new short[Forms.Resources.Assets.Stick.Length / 2];
       System.Buffer.BlockCopy(Forms.Resources.Assets.Stick, 0, _click, 0, Forms.Resources.Assets.Stick.Length);
+      _myBuffer = new MyBuffer(); // 1 minute!
+      
     }
 
+    
     public MediaStreamSource MediaStreamSource { get; }
 
     private Model.Beat FindBeat(double totalSeconds, int start, int end)
@@ -70,6 +75,7 @@ namespace Jammit.Audio
 
     private IBuffer GetBuffer()
     {
+#if false
       IBuffer buffer;
       bool dequeued = _buffersQueue.TryDequeue(out buffer);
       if (!dequeued)
@@ -84,6 +90,9 @@ namespace Jammit.Audio
       }
 
       return buffer;
+#else
+      return _myBuffer.GetBuffer();
+#endif
     }
 
     private void OnStarting(MediaStreamSource sender, MediaStreamSourceStartingEventArgs args)
@@ -115,7 +124,7 @@ namespace Jammit.Audio
           sample.Processed += OnSampleProcessed;
 
           // 10000000 / 44100 * 64 => 10^-7s
-          sample.Duration = TimeSpan.FromTicks(10000000 / 44100 * 64);// TODO: Infer from audio format
+          sample.Duration = TimeSpan.FromTicks(10000000 / 44100 * 32);// TODO: Infer from audio format
 
           _currentPosition += sample.Duration;
         }
@@ -142,6 +151,77 @@ namespace Jammit.Audio
     {
       _buffersQueue.Enqueue(sender.Buffer);
       sender.Processed -= OnSampleProcessed;
+    }
+  }
+
+  public class MyBuffer
+  {
+    byte[] _dialTone;
+    IBuffer _dialToneBuffer;
+    
+
+    public MyBuffer()
+    {
+      _dialTone = new byte[2 * 44100 * 60]; // 1 minute!
+      FillDialTone();
+      SetupBuffer();
+    }
+
+    public IBuffer GetBuffer()
+    {
+      return _dialToneBuffer;
+    }
+    private void FillDialTone()
+    {
+      // Create a pilot tone: sin wave at 440 Hz
+
+      const float PI = 3.1416f;
+      const int sineFrequency = 440;
+
+      // move where best fits
+      short[] _click;
+
+
+      // Expose this as a param, and/or with a function to compute it.
+      int bpm = 60;
+
+      _click = new short[Forms.Resources.Assets.Stick.Length / 2];
+      System.Buffer.BlockCopy(Forms.Resources.Assets.Stick, 0, _click, 0, Forms.Resources.Assets.Stick.Length);
+
+      int samplingFrequency = 44100;
+      float samplesPerPeriod = samplingFrequency / (float)sineFrequency;
+
+      // TODO: Use timespans for precise values, or floats may suffice
+      int beatIntervalInSamples = (int) (samplingFrequency / ((float)bpm / 60 ));
+
+
+      for (int i = 0; i < _dialTone.Length / 2; i++)
+      {
+
+        // Compute and append sin wave on both channels.
+        // This is where things may be wrong, not sure what dialTone is: mono signal duplicated or dual channel signal
+        //short value = (short)(16000 * Math.Sin(2 * PI * i / samplesPerPeriod));
+        //_dialTone[2 * i] = (byte)(value & 0XFF);
+        //_dialTone[2 * i + 1] = (byte)((value >> 8) & 0xFF);
+
+        // Add the ticking signal
+        if(i % beatIntervalInSamples < Forms.Resources.Assets.Stick.Length / 2 - 1)
+        {
+          _dialTone[2 * i] = (byte)(_click[i % beatIntervalInSamples] & 0XFF);
+          _dialTone[2 * i + 1] = (byte)((_click[i % beatIntervalInSamples] >> 8) & 0xFF);
+        }
+      }
+    }
+
+    private void SetupBuffer()
+    {
+      _dialToneBuffer = new Buffer((uint) _dialTone.Length * 2);
+      
+      using (System.IO.Stream stream = System.Runtime.InteropServices.WindowsRuntime.WindowsRuntimeBufferExtensions.AsStream(_dialToneBuffer))
+      {
+        stream.Write(_dialTone, 0, _dialTone.Length);
+      }
+      _dialToneBuffer.Length = _dialToneBuffer.Capacity / 2;
     }
   }
 }

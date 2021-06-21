@@ -36,7 +36,7 @@ namespace Jammit.Audio
       //var uri = $"{mediaPath}/{media.ClickTrack.Identifier.ToString().ToUpper()}_jcf"
       instance._clickSource = new ClickMediaStreamSource(media);
       instance._clickPlayer = new MediaPlayer();
-      instance._clickPlayer.CommandManager.IsEnabled = false;
+      instance._clickPlayer.CommandManager.IsEnabled = true;
       instance._clickPlayer.TimelineController = instance._mediaTimelineController;
       instance._clickPlayer.Source = MediaSource.CreateFromMediaStreamSource(instance._clickSource.MediaStreamSource);
       //init click track
