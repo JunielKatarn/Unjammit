@@ -175,12 +175,8 @@ namespace Jammit.Audio
     {
       // Create a pilot tone: sin wave at 440 Hz
 
-      const float PI = 3.1416f;
-      const int sineFrequency = 440;
-
       // move where best fits
       short[] _click;
-
 
       // Expose this as a param, and/or with a function to compute it.
       int bpm = 60;
@@ -189,7 +185,6 @@ namespace Jammit.Audio
       System.Buffer.BlockCopy(Forms.Resources.Assets.Stick, 0, _click, 0, Forms.Resources.Assets.Stick.Length);
 
       int samplingFrequency = 44100;
-      float samplesPerPeriod = samplingFrequency / (float)sineFrequency;
 
       // TODO: Use timespans for precise values, or floats may suffice
       int beatIntervalInSamples = (int) (samplingFrequency / ((float)bpm / 60 ));
