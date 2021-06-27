@@ -254,3 +254,6 @@ ModelManifest.xml
 
 # Vim
 *.swp
+
+# MSBuild
+msbuild.binlog
