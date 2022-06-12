@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Jammit.Model;
+using System;
 using System.Collections.Concurrent;
 
 using Windows.Media.Core;
@@ -40,7 +41,7 @@ namespace Jammit.Audio
 
       _click = new short[Forms.Resources.Assets.Stick.Length / 2];
       System.Buffer.BlockCopy(Forms.Resources.Assets.Stick, 0, _click, 0, Forms.Resources.Assets.Stick.Length);
-      _myBuffer = new MyBuffer();
+      _myBuffer = new MyBuffer(_media);
     }
 
     public MediaStreamSource MediaStreamSource { get; }
@@ -184,12 +185,12 @@ namespace Jammit.Audio
   {
     byte[] _dialTone;
     IBuffer _dialToneBuffer;
-    
+    JcfMedia _media;
 
-    public MyBuffer()
+    public MyBuffer(JcfMedia media)
     {
       //_dialTone = new byte[2 * 44100 * 60]; // 1 minute!
-      _dialTone = new byte[2 * 44100 * 10]; // More like 2 * freq * totalBeats!
+      _dialTone = new byte[2 * 44100 * (int)media.Length.TotalSeconds]; // More like 2 * freq * seconds!
       FillDialTone();
       SetupBuffer();
     }
@@ -198,6 +199,7 @@ namespace Jammit.Audio
     {
       return _dialToneBuffer;
     }
+
     private void FillDialTone()
     {
       // Create a pilot tone: sin wave at 440 Hz
@@ -217,6 +219,7 @@ namespace Jammit.Audio
       int beatIntervalInSamples = (int) (samplingFrequency / ((float)bpm / 60 ));
 
 
+#if true
       for (int i = 0; i < _dialTone.Length / 2; i++)
       {
 
@@ -227,12 +230,21 @@ namespace Jammit.Audio
         //_dialTone[2 * i + 1] = (byte)((value >> 8) & 0xFF);
 
         // Add the ticking signal
-        if(i % beatIntervalInSamples < Forms.Resources.Assets.Stick.Length / 2 - 1)
+        if (i % beatIntervalInSamples < Forms.Resources.Assets.Stick.Length / 2 - 1)
         {
           _dialTone[2 * i] = (byte)(_click[i % beatIntervalInSamples] & 0xFF);
           _dialTone[2 * i + 1] = (byte)((_click[i % beatIntervalInSamples] >> 8) & 0xFF);
         }
       }
+#else
+      foreach(var beat in _media.Beats)
+      {
+        if (beat.IsGhostBeat)
+          continue;
+
+
+      }
+#endif
     }
 
     private void SetupBuffer()
