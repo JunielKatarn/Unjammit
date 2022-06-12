@@ -76,7 +76,7 @@ namespace Jammit.Audio
     int lastSecond = 0;
     private IBuffer GetBuffer()
     {
-#if true
+#if false
       IBuffer buffer;
       bool dequeued = _buffersQueue.TryDequeue(out buffer);
       if (!dequeued)
@@ -229,7 +229,7 @@ namespace Jammit.Audio
         // Add the ticking signal
         if(i % beatIntervalInSamples < Forms.Resources.Assets.Stick.Length / 2 - 1)
         {
-          _dialTone[2 * i] = (byte)(_click[i % beatIntervalInSamples] & 0XFF);
+          _dialTone[2 * i] = (byte)(_click[i % beatIntervalInSamples] & 0xFF);
           _dialTone[2 * i + 1] = (byte)((_click[i % beatIntervalInSamples] >> 8) & 0xFF);
         }
       }
