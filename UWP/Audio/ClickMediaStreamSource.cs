@@ -189,8 +189,10 @@ namespace Jammit.Audio
 
     public MyBuffer(JcfMedia media)
     {
+      _media = media;
+
       //_dialTone = new byte[2 * 44100 * 60]; // 1 minute!
-      _dialTone = new byte[2 * 44100 * (int)media.Length.TotalSeconds]; // More like 2 * freq * seconds!
+      _dialTone = new byte[2 * 44100 * (int)media.Length.TotalSeconds]; // More like channels * freq * seconds!
       FillDialTone();
       SetupBuffer();
     }
@@ -219,7 +221,7 @@ namespace Jammit.Audio
       int beatIntervalInSamples = (int) (samplingFrequency / ((float)bpm / 60 ));
 
 
-#if true
+#if false
       for (int i = 0; i < _dialTone.Length / 2; i++)
       {
 
@@ -237,12 +239,27 @@ namespace Jammit.Audio
         }
       }
 #else
-      foreach(var beat in _media.Beats)
+      foreach (var beat in _media.Beats)
       {
         if (beat.IsGhostBeat)
           continue;
 
+        // More like channels * freq * seconds!
+        var indexD = (2 * 44100 * beat.Time);
+        var offset = (int)indexD;
 
+        int x = 0;
+        for(int i=0; i < _click.Length; i++)
+        {
+          if (i >= _click.Length)
+            x = 99;
+
+          if (offset >= _dialTone.Length)
+            continue;
+
+          _dialTone[offset + 2 * i] = (byte)(_click[i % beatIntervalInSamples] & 0xFF);
+          _dialTone[offset + 2 * i + 1] = (byte)((_click[i % beatIntervalInSamples] >> 8) & 0xFF);
+        }
       }
 #endif
     }
