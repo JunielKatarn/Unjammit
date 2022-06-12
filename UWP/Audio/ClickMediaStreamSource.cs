@@ -120,6 +120,7 @@ namespace Jammit.Audio
     private void OnStarting(MediaStreamSource sender, MediaStreamSourceStartingEventArgs args)
     {
       //args.Request.SetActualStartPosition(args.Request.StartPosition ?? TimeSpan.Zero);
+      _currentPosition = _controller.Position;
       args.Request.SetActualStartPosition(_currentPosition);
     }
 
@@ -241,7 +242,7 @@ namespace Jammit.Audio
 #else
       foreach (var beat in _media.Beats)
       {
-        if (beat.IsGhostBeat)
+        if (beat.IsGhostBeat || beat.IsDownBeat)
           continue;
 
         // More like channels * freq * seconds!
