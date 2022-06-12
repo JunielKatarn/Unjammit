@@ -249,13 +249,9 @@ namespace Jammit.Audio
         var indexD = (2 * 44100 * beat.Time);
         var offset = (int)indexD;
 
-        int x = 0;
         for(int i=0; i < _click.Length; i++)
         {
-          if (i >= _click.Length)
-            x = 99;
-
-          if (offset >= _dialTone.Length)
+          if (offset >= _dialTone.Length - 1)
             continue;
 
           _dialTone[offset + 2 * i] = (byte)(_click[i % beatIntervalInSamples] & 0xFF);
