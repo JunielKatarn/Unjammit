@@ -457,5 +457,10 @@ namespace Jammit.Forms.Views
     {
       SetScorePage(PageIndex);
     }
+
+    async void SettingsButton_Clicked(object sender, System.EventArgs e)
+    {
+      await Navigation.PushModalAsync(new SongSettingsPage());
+    }
   }
 }
