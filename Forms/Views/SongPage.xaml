@@ -45,8 +45,8 @@
               BackgroundColor="DimGray"
               Clicked="CloseButton_Clicked" />
       <Button x:Name="SettingsButton"
-              Text="⚙️"
               BackgroundColor="DimGray"
+              Text=" ⚙️ "
               Clicked="SettingsButton_Clicked"
               />
       <Label Text="{Binding Song.Title}" HorizontalOptions="FillAndExpand" />
