@@ -5,11 +5,26 @@
     x:Class="Jammit.Forms.Views.SongSettingsPage">
   <ContentPage.Content>
 
-    <StackLayout>
-      <Label Text="Song Settings" />
-      <Button x:Name="BackButton" Clicked="BackButton_Clicked" />
+    <StackLayout BackgroundColor="Gray">
+      <StackLayout x:Name="HeaderLayout" Orientation="Horizontal">
+        <Button x:Name="BackButton"
+              Text="[TRANSLATE] Back"
+              TextColor="White"
+              FontAttributes="Bold"
+              BackgroundColor="DimGray"
+              Clicked="BackButton_Clicked" />
+      </StackLayout>
+      <Grid>
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="*" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <!--Row 0-->
+        <Label Grid.Row="0" Grid.Column="0" Text="[TRANSLATE] Count-in Clicks" />
+        <Entry Grid.Row="0" Grid.Column="1" Text="0" />
+      </Grid>
     </StackLayout>
 
   </ContentPage.Content>
 </ContentPage>
-

@@ -12,6 +12,13 @@ namespace Jammit.Forms.Views
       InitializeComponent();
     }
 
+    protected override void OnAppearing()
+    {
+      BackButton.Text = "⬅️ " + BackButton.Text;
+
+      base.OnAppearing();
+    }
+
     async void BackButton_Clicked(object sender, System.EventArgs e)
     {
       await Navigation.PopModalAsync(animated: true);
