@@ -16,7 +16,7 @@
               BackgroundColor="DimGray"
               Clicked="BackButton_Clicked" />
       </StackLayout>
-      <Grid HorizontalOptions="Center" WidthRequest="724">
+      <Grid HorizontalOptions="Center" WidthRequest="724" Padding="2" BackgroundColor="DimGray">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
           <ColumnDefinition Width="*" />
@@ -25,7 +25,7 @@
         <!--Row 0-->
         <Label Grid.Row="0" Grid.Column="0"
                Text="[TRANSLATE] Count-in Clicks"
-               BackgroundColor="LightGray"
+               BackgroundColor="Gray"
                />
         <Entry Grid.Row="0" Grid.Column="1"
                x:Name="CountinEntry"
