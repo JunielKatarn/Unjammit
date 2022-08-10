@@ -2,7 +2,9 @@
 <ContentPage
     xmlns="http://xamarin.com/schemas/2014/forms"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    x:Class="Jammit.Forms.Views.SongSettingsPage">
+    x:Class="Jammit.Forms.Views.SongSettingsPage"
+    Disappearing="SongSettingsPage_Disappearing"
+  >
   <ContentPage.Content>
 
     <StackLayout BackgroundColor="Gray">
@@ -14,15 +16,21 @@
               BackgroundColor="DimGray"
               Clicked="BackButton_Clicked" />
       </StackLayout>
-      <Grid>
+      <Grid HorizontalOptions="Center" WidthRequest="724">
         <Grid.ColumnDefinitions>
           <ColumnDefinition Width="*" />
           <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <!--Row 0-->
-        <Label Grid.Row="0" Grid.Column="0" Text="[TRANSLATE] Count-in Clicks" />
-        <Entry Grid.Row="0" Grid.Column="1" Text="0" />
+        <Label Grid.Row="0" Grid.Column="0"
+               Text="[TRANSLATE] Count-in Clicks"
+               BackgroundColor="LightGray"
+               />
+        <Entry Grid.Row="0" Grid.Column="1"
+               x:Name="CountinEntry"
+               Text="0"
+               />
       </Grid>
     </StackLayout>
 
