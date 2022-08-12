@@ -64,6 +64,11 @@ namespace Jammit.Forms
       return $"Song/{song.Sku}/Position";
     }
 
+    public static string CountInKey(Model.SongInfo song)
+    {
+      return $"Song/{song.Sku}/CountIn";
+    }
+
     #endregion Settings Functions
 
     public static void Clear()
