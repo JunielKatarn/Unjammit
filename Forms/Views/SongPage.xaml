@@ -152,7 +152,7 @@
             HeightRequest="{Binding Source={x:Reference ControlsLayout}, Path=MinimumWidthRequest}"
             WidthRequest="{Binding Source={x:Reference ControlsLayout}, Path=MinimumWidthRequest}" />
         </AbsoluteLayout>
-        <local:Mixer Player="{Binding Player}" Media="{Binding Media}" />
+        <local:Mixer x:Name="Mixer" Player="{Binding Player}" Media="{Binding Media}" />
       </StackLayout>
       <StackLayout x:Name="ProgressLayout"
                    HorizontalOptions="FillAndExpand">

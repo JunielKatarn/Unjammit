@@ -136,12 +136,28 @@ namespace Jammit.Forms.Views
 
     #endregion
 
+
+    //TODO: Turn into event
+    private void MuteAfterCountin()
+    {
+      var countIn = Settings.Get(Settings.CountInKey(Song), 0);
+      if (countIn > 0 && _beatIndex > countIn)
+      {
+        Player.SetVolume(Mixer.Media.ClickTrack, 0);
+      }
+      else
+      {
+        Player.GetVolume(Mixer.Media.ClickTrack);
+      }
+    }
+
     private void FindBeat(double totalSeconds, int start, int end)
     {
       int mid = (start + end) / 2;
       if (mid == start)
       {
         _beatIndex = mid;
+        MuteAfterCountin();
       }
       else if (Media.Beats[mid].Time < totalSeconds)
       {
@@ -153,6 +169,7 @@ namespace Jammit.Forms.Views
         if (Media.Beats[mid - 1].Time <= totalSeconds)
         {
           _beatIndex = mid - 1;
+          MuteAfterCountin();
           return;
         }
 
@@ -162,6 +179,7 @@ namespace Jammit.Forms.Views
       {
         // Unlikely, double equality.
         _beatIndex = mid;
+        MuteAfterCountin();
       }
     }
 
@@ -460,7 +478,7 @@ namespace Jammit.Forms.Views
 
     async void SettingsButton_Clicked(object sender, System.EventArgs e)
     {
-      await Navigation.PushModalAsync(new SongSettingsPage());
+      await Navigation.PushModalAsync(new SongSettingsPage(Song));
     }
   }
 }
