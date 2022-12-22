@@ -7,4 +7,10 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <None Remove="Hearn.Midi" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Hearn.Midi" Version="1.0.0" />
+  </ItemGroup>
 </Project>
