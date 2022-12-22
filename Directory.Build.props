@@ -14,7 +14,7 @@
     <OutputPath>$(BaseOutputPath)$(Platform)\$(Configuration)\$(MSBuildProjectName)\</OutputPath>
 
     <!-- Set global C# language version. -->
-    <LangVersion>8.0</LangVersion>
+    <LangVersion>10.0</LangVersion>
   </PropertyGroup>
 
 </Project>
