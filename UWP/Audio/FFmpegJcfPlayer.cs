@@ -7,6 +7,8 @@ using Windows.Media;
 using Windows.Media.Playback;
 using Xamarin.Forms;
 
+using MediaSource = Windows.Media.Core.MediaSource;
+
 namespace Jammit.Audio
 {
   public class FFmpegJcfPlayer : IJcfPlayer
