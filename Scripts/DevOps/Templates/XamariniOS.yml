@@ -4,19 +4,24 @@
 
 parameters:
   # name:
-  displayName:
-  project:
-  platformVariableGroup: ''
-  buildConfigurations: [ Debug, Release ]
+  - name: displayName
+  - name: project
+  - name: platformVariableGroup
+  - name: buildConfigurations
+    type: object
+    default: [ Debug, Release ]
 
   # XamariniOS
-  packageApp: false
-  buildForSimulator: true
-  xcodeArguments: ''
-  signingIdentity: ''
-  signingProvisioningProfileID: ''
-
-  debug: false
+  - name: packageApp
+    default: false
+  - name: buildForSimulator
+    default: true
+  - name: xcodeArguments
+    default: ''
+  - name: signingIdentity
+    default: ''
+  - name: signingProvisioningProfileID
+    default: ''
 
 jobs:
   - job: #${{ parameters.name }}
@@ -32,8 +37,8 @@ jobs:
     strategy:
       matrix:
         ${{ each configuration in parameters.buildConfigurations }}:
-            "${{ configuration }}":
-              BuildConfiguration: ${{ configuration }}
+          "${{ configuration }}":
+            BuildConfiguration: ${{configuration}}
 
     steps:
       - bash: |
@@ -50,11 +55,6 @@ jobs:
           sudo xcode-select --switch /Applications/Xcode_${XCODE_VERSION}.app/Contents/Developer
         displayName: Select Xcode version $(Xcode.Version)
 
-      - task: DotNetCoreInstaller@1
-        inputs:
-          packageType: sdk
-          version: $(DotNetCoreSdk.Version)
-
       - task: UseDotNet@2
         inputs:
           packageType: sdk
@@ -65,14 +65,17 @@ jobs:
         inputs:
           solution: ${{ parameters.project }}
           msbuildArchitecture: $(MSBuild.MSBuildArchitecture)
-          msbuildArguments: /t:Restore
+          platform: iPhoneSimulator
+          msbuildArguments:
+            /t:Restore
+            /p:Configuration=$(BuildConfiguration)
 
       - task: XamariniOS@2
         displayName: Build ${{ parameters.project }}
         inputs:
+          clean: false
           solutionFile: ${{ parameters.project }}
           configuration: $(BuildConfiguration)
-          clean: true
           packageApp: ${{ parameters.packageApp }}
           buildForSimulator: ${{ parameters.buildForSimulator }}
           args: ${{ parameters.xcodeArguments }}

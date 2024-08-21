@@ -4,18 +4,22 @@
 #   - XamarinAndroid.Version
 
 parameters:
-  # name:
-  displayName:
-  project:
-  platformVariableGroup: ''
-  buildConfigurations: [ Debug, Release ]
+  - name: displayName
+  - name: project
+  - name: platformVariableGroup
+  - name: buildConfigurations
+    type: object
+    default: [ Debug, Release ]
 
   # XamarinAndroid
-  createAppPackage: false
-  buildForSimulator: true
-  msbuildArguments: ''
-
-  debug: false
+  - name: createAppPackage
+    default: false
+  - name: buildForSimulator
+    default: true
+  - name: msbuildArguments
+    default: ''
+  - name: debug
+    default: false
 
 jobs:
   - job:
@@ -30,8 +34,8 @@ jobs:
     strategy:
       matrix:
         ${{ each configuration in parameters.buildConfigurations }}:
-            "${{ configuration }}":
-              BuildConfiguration: ${{ configuration }}
+          "${{ configuration }}":
+            BuildConfiguration: ${{ configuration }}
 
     steps:
       - checkout: self
@@ -51,11 +55,6 @@ jobs:
           /bin/bash -c "sudo $AGENT_HOMEDIRECTORY/scripts/select-xamarin-sdk.sh ${XAMARINANDROID_MONOVERSION}"
         displayName: Set Xamarin version.
 
-      - task: DotNetCoreInstaller@1
-        inputs:
-          packageType: sdk
-          version: $(DotNetCoreSdk.Version)
-
       - task: UseDotNet@2
         inputs:
           packageType: sdk
@@ -66,12 +65,15 @@ jobs:
         inputs:
           solution: ${{ parameters.project }}
           msbuildArchitecture: $(MSBuild.MSBuildArchitecture)
-          msbuildArguments: /t:Restore
+          platform: AnyCPU
+          msbuildArguments:
+            /t:Restore
+            /p:Configuration=$(BuildConfiguration)
 
       - task: XamarinAndroid@1
         displayName: Build ${{ parameters.project }}
         inputs:
+          clean: false
           projectFile: ${{ parameters.project }}
           configuration: $(BuildConfiguration)
           createAppPackage: ${{ parameters.createAppPackage }}
-          clean: false

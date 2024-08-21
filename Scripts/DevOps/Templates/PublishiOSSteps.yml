@@ -9,7 +9,8 @@
 #   - TeamId
 
 parameters:
-  phase: # Alpha, Beta, Production (Omega)
+  - name: phase
+    default: Alpha  # Alpha, Beta, Production (Omega)
 
 steps:
   - powershell: |
@@ -42,7 +43,7 @@ steps:
   - task: InstallAppleCertificate@2
     displayName: Install Certificate
     inputs:
-      certSecureFile: com.unjammit.ios.dist.p12
+      certSecureFile: com.unjammit.apple.dist.p12
       certPwd: $(SigningKeyPassword)
 
   - task: InstallAppleProvisioningProfile@1
@@ -54,7 +55,5 @@ steps:
   - template: BuildiOSSteps.yml
     parameters:
       project: $(Build.SourcesDirectory)/iOS/Unjammit.iOS.csproj
-      buildPlatform: Ad-Hoc
-      buildConfiguration: Release
       packageApp: true
       buildForSimulator: false

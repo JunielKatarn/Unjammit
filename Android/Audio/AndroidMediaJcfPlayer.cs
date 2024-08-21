@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 
 using Android.Media;
 using Jammit.Model;
@@ -54,6 +54,21 @@ namespace Jammit.Audio
       _player.SetVolume((float)volume, (float)volume);
     }
 
+    TrackState.AudioStatus IJcfPlayer.GetAudioStatus(PlayableTrackInfo track)
+    {
+      throw new NotImplementedException();
+    }
+
+    void IJcfPlayer.Mute(PlayableTrackInfo track)
+    {
+      throw new NotImplementedException();
+    }
+
+    void IJcfPlayer.Unmute(PlayableTrackInfo track)
+    {
+      throw new NotImplementedException();
+    }
+
     public TimeSpan Position
     {
       get
@@ -76,6 +91,10 @@ namespace Jammit.Audio
     }
 
     public PlaybackStatus State { get; private set; }
+
+    public uint Countdown { get; set; } = 0;
+
+    public uint TotalBeats { get; private set; }
 
     #endregion IJcfPlayer
   }// class AndroidMediaJcfPlayer

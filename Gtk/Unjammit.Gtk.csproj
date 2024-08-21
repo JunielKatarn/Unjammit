@@ -79,13 +79,13 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Xamarin.Forms.Platform.GTK">
-      <Version>5.0.0.2401</Version>
+      <Version>5.0.0.2662</Version>
     </PackageReference>
     <PackageReference Include="LibVLCSharp.Forms.GTK">
-      <Version>3.6.6</Version>
+      <Version>3.8.5</Version>
     </PackageReference>
     <PackageReference Include="NAudio.Core">
-      <Version>2.1.0</Version>
+      <Version>2.2.1</Version>
     </PackageReference>
   </ItemGroup>
   <ItemGroup />

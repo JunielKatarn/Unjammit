@@ -96,6 +96,23 @@ namespace Jammit.Audio
       players[track].Volume = volume / 100.0f;
     }
 
+    TrackState.AudioStatus IJcfPlayer.GetAudioStatus(PlayableTrackInfo track)
+    {
+      throw new NotImplementedException();
+    }
+
+    void IJcfPlayer.Mute(PlayableTrackInfo track)
+    {
+      throw new NotImplementedException();
+    }
+
+    void IJcfPlayer.Unmute(PlayableTrackInfo track)
+    {
+      throw new NotImplementedException();
+    }
+
+    public uint TotalBeats { get; private set; }
+
     public TimeSpan Position
     {
       get
@@ -117,6 +134,8 @@ namespace Jammit.Audio
     public TimeSpan Length => media.Length;
 
     public PlaybackStatus State { get; private set; }
+
+    public uint Countdown { get; set; } = 0;
 
     #endregion  IJcfPlayer members
   }

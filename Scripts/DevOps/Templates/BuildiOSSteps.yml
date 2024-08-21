@@ -3,17 +3,20 @@
 #   - XamariniOS.MonoVersion
 
 parameters:
-  # name:
-  project:
+  - name: project
 
   # XamariniOS
-  packageApp: false
-  buildForSimulator: true
-  xcodeArguments: ''
+  - name: packageApp
+    default: false
+  - name: buildForSimulator
+    default: true
+  - name: xcodeArguments
+    default: ''
 #  signingIdentity: ''
 #  signingProvisioningProfileID: ''
 
-  debug: false
+  - name: debug
+    default: false
 
 steps:
   # - template: SetMacOSFrameworkVersion.yml
@@ -34,11 +37,6 @@ steps:
       sudo xcode-select --switch /Applications/Xcode_${XCODE_VERSION}.app/Contents/Developer
     displayName: Select Xcode version $(Xcode.Version)
 
-  - task: DotNetCoreInstaller@1
-    inputs:
-      packageType: sdk
-      version: $(DotNetCoreSdk.Version)
-
   - task: UseDotNet@2
     inputs:
       packageType: sdk
@@ -49,6 +47,8 @@ steps:
     inputs:
       solution: ${{ parameters.project }}
       msbuildArchitecture: $(MSBuild.MSBuildArchitecture)
+      platform: $(BuildPlatform)
+      configuration: $(BuildConfiguration)
       msbuildArguments: /t:Restore
 
   - task: XamariniOS@2
@@ -56,9 +56,9 @@ steps:
     inputs:
       solutionFile: ${{ parameters.project }}
       configuration: $(BuildConfiguration)
-      clean: true
+      clean: false #ProjectExtensions resides in the same intermediate output directory
       packageApp: ${{ parameters.packageApp }}
       buildForSimulator: ${{ parameters.buildForSimulator }}
       args: ${{ parameters.xcodeArguments }}
-  #    signingIdentity: ${{ parameters.signingIdentity }}
-  #    signingProvisioningProfileID: ${{ parameters.signingProvisioningProfileID }}
+      #signingIdentity: ${{ parameters.signingIdentity }}
+      #signingProvisioningProfileID: ${{ parameters.signingProvisioningProfileID }}

@@ -3,9 +3,11 @@
 #   - MSBuild.MaximumCpuCount
 
 parameters:
-  project:
-  msbuildArguments: ''
-  debug: false
+  - name: project
+  - name: msbuildArguments
+    default: ''
+  - name: debug
+    default: false
 
 steps:
   - task: PowerShell@2
@@ -20,14 +22,8 @@ steps:
         Write-Host "[${env:BuildConfiguration}]"
     condition: ${{ parameters.debug }}
 
-  - task: DotNetCoreInstaller@1
-    inputs:
-      packageType: sdk
-      version: $(DotNetCoreSdk.Version)
-
   - task: UseDotNet@2
     inputs:
-      packageType: sdk
       version: $(DotNetCoreSdk.Version)
 
   - task: NuGetCommand@2
@@ -40,6 +36,8 @@ steps:
     inputs:
       solution: ${{ parameters.project }}
       msbuildArchitecture: $(MSBuild.MSBuildArchitecture)
+      platform: $(BuildPlatform)
+      configuration: $(BuildConfiguration)
       msbuildArguments: /t:Restore
 
   - task: MSBuild@1
@@ -47,8 +45,8 @@ steps:
     inputs:
       solution: ${{ parameters.project }}
       msbuildArchitecture: $(MSBuild.MSBuildArchitecture)
-      configuration: $(BuildConfiguration)
       platform: $(BuildPlatform)
+      configuration: $(BuildConfiguration)
       msbuildArguments: ${{ parameters.msbuildArguments }}
       clean: true
       maximumCpuCount: $(MSBuild.MaximumCpuCount)
